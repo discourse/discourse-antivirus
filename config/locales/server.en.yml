@@ -1,0 +1,6 @@
+en:
+  site_settings:
+    discourse_antivirus_enabled: "Enable discourse-antivirus plugin"
+
+  scan:
+    virus_found: The antivirus flagged this file as malicious, so it can't be uploaded.
