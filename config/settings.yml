@@ -6,5 +6,5 @@ plugins:
     default: false
   clamav_hostname:
     default: localhost
-  clamav_post
+  clamav_post:
     default: 3310
