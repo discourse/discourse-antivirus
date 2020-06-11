@@ -2,3 +2,9 @@ plugins:
   discourse_antivirus_enabled:
     default: true
     client: true
+  live_scan_images:
+    default: false
+  clamav_hostname:
+    default: localhost
+  clamav_post
+    default: 3310

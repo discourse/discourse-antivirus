@@ -4,6 +4,12 @@ module DiscourseAntivirus
   class ClamAV
     VIRUS_FOUND = Class.new(StandardError)
 
+    def self.instance
+      socket = TCPSocket.new(SiteSetting.clamav_host, SiteSetting.clamav_port)
+
+      new(socket)
+    end
+
     def initialize(tcp_socket)
       @socket = tcp_socket
     end

@@ -9,10 +9,6 @@ class FakeTCPSocket
   attr_reader :received
   attr_accessor :canned_response
 
-  def flush
-    @received = []
-  end
-
   def send(text, _)
     received << text
   end

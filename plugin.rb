@@ -14,13 +14,11 @@ load File.expand_path('lib/discourse-antivirus/engine.rb', __dir__)
 
 after_initialize do
   require_dependency File.expand_path('../lib/discourse-antivirus/clamav.rb', __FILE__)
-  require_dependency File.expand_path('../spec/support/fake_tcp_socket.rb', __FILE__)
 
-  on(:before_upload_creation) do |file|
-    response = "1: stream: Win.Test.EICAR_HDB-1 FOUND\0"
-    fake_socket = FakeTCPSocket.new(response)
+  on(:before_upload_creation) do |file, is_image|
+    should_scan_file = !is_image || SiteSetting.live_scan_images
 
-    if DiscourseAntivirus::ClamAV.new(fake_socket).virus?(file)
+    if should_scan_file && DiscourseAntivirus::ClamAV.instance.virus?(file)
       raise DiscourseAntivirus::ClamAV::VIRUS_FOUND, I18n.t('scan.virus_found')
     end
   end
