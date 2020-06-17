@@ -1,0 +1,20 @@
+<div class='reviewable-upload'>
+  <div class='reviewable-upload-contents'>
+    <div class='post-contents-wrapper'>
+      <div class='post-contents'>
+        <div class='post-body'>
+          {{{ reviewable.payload.post_cooked }}}
+        </div>
+      </div>
+    </div>
+
+    {{reviewable-field classes='reviewable-upload-details scan-result'
+                                  name=(i18n 'review.file.scan_result')
+                                  value=reviewable.payload.scan_message}}
+
+    {{reviewable-field classes='reviewable-upload-details filename'
+                                  name=(i18n 'review.file.filename')
+                                  value=reviewable.payload.original_filename}}
+  </div>
+  {{yield}}
+</div>

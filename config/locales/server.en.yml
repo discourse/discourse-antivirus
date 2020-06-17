@@ -1,9 +1,18 @@
 en:
   site_settings:
     discourse_antivirus_enabled: "Enable discourse-antivirus plugin"
-    live_scan_images: Enable live scanning of images
-    clamav_host: Hostname where the ClamAV service is running
-    clamav_port: Port where the ClamAV service is running
+    antivirus_live_scan_images: Enable live scanning of images
+    antivirus_clamav_host: Hostname where the ClamAV service is running
+    antivirus_clamav_port: Port where the ClamAV service is running
 
   scan:
     virus_found: The antivirus flagged this file as malicious, so it can't be uploaded.
+    quarantined: "[This file was removed because it was flagged as malicious]"
+  
+  reviewables:
+    reasons:
+      malicious_file: The antivirus flagged this file as malicious. See more at `antivirus` settings.
+
+  reviewable_score_types:
+    malicious_file:
+      title: Malicious file
