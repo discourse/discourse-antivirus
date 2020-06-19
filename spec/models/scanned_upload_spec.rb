@@ -10,7 +10,7 @@ describe ScannedUpload do
   let(:scan_message) { "1: stream: Win.Test.EICAR_HDB-1 FOUND\0" }
 
   describe '#move_to_quarantine!' do
-    it 'xxxxx' do
+    it 'removes the upload link and locks the post' do
       upload_link = "#{Upload.base62_sha1(upload.sha1)}#{upload.extension.present? ? ".#{upload.extension}" : ""}"
       post.raw = "[attachment.jpg|attachment](upload://#{upload_link})"
 
@@ -22,7 +22,7 @@ describe ScannedUpload do
       expect(qurantined_post.locked_by_id).to eq(Discourse.system_user.id)
     end
 
-    it 'sxsxsxs' do
+    it 'creates a reviewable for the quarantined upload' do
       scanned_upload.move_to_quarantine!(scan_message)
 
       reviewable = ReviewableUpload.find_by(target: upload)

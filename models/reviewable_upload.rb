@@ -4,10 +4,73 @@ require_dependency 'reviewable'
 
 class ReviewableUpload < Reviewable
   def build_actions(actions, guardian, _args)
-    []
+    return [] unless pending?
+
+    reject = actions.add_bundle(
+      'reject_upload',
+      icon: 'thumbs-up',
+      label: 'js.antivirus.remove_upload.title'
+    )
+
+    build_action(actions, :remove_file, bundle: reject, icon: 'thumbs-up')
+    build_action(actions, :remove_file_and_delete_posts, bundle: reject, icon: 'trash-alt')
+
+    if guardian.can_delete_user?(target.user)
+      build_action(
+        actions,
+        :remove_file_and_delete_user,
+        bundle: reject,
+        icon: 'ban',
+        button_class: 'btn-danger',
+        confirm: true
+      )
+    end
+  end
+
+  def perform_remove_file(performed_by, _args)
+    target.destroy!
+
+    successful_transition :deleted, :agreed
+  end
+
+  def perform_remove_file_and_delete_posts(performed_by, _args)
+    target.posts.each { |post| PostDestroyer.new(performed_by, post, defer_flags: true).destroy }
+    target.destroy!
+
+    successful_transition :deleted, :agreed
+  end
+
+  def perform_remove_file_and_delete_user(performed_by, _args)
+    if Guardian.new(performed_by).can_delete_user?(target.user)
+      UserDestroyer.new(performed_by).destroy(target.user, user_deletion_opts(performed_by))
+    end
+
+    target.destroy!
+
+    successful_transition :deleted, :agreed
   end
 
   private
+
+  def user_deletion_opts(performed_by)
+    base = {
+      context: I18n.t('antivirus.delete_reason', performed_by: performed_by.username),
+      delete_posts: true
+    }
+
+    base.tap do |b|
+      b.merge!(block_email: true, block_ip: true) if Rails.env.production?
+    end
+  end
+
+  def post; end
+
+  def successful_transition(to_state, update_flag_status, recalculate_score: true)
+    create_result(:success, to_state)  do |result|
+      result.recalculate_score = recalculate_score
+      result.update_flag_stats = { status: update_flag_status, user_ids: [created_by_id] }
+    end
+  end
 
   def build_action(actions, id, icon:, bundle: nil, confirm: false, button_class: nil)
     actions.add(id, bundle: bundle) do |action|

@@ -12,11 +12,9 @@ class ScannedUpload < ActiveRecord::Base
 
     self.class.transaction do
       self.quarantined = true
-      uploaded_in = upload.posts.map do |post|
+      uploaded_in = upload.posts.each do |post|
         quarantined_raw = post.raw.gsub(/!?\[(.*?)\]\(upload:\/\/#{upload_link}\)/, I18n.t("scan.quarantined"))
         post.update!(raw: quarantined_raw, locked_by_id: system_user.id)
-
-        post.id
       end
 
       reviewable = ReviewableUpload.needs_review!(
@@ -25,7 +23,7 @@ class ScannedUpload < ActiveRecord::Base
           scan_message: scan_message,
           original_filename: upload.original_filename,
           post_cooked: original_post_cooked_example,
-          uploaded_in: uploaded_in
+          uploaded_by: upload.user.username
         }
       )
 
@@ -36,6 +34,8 @@ class ScannedUpload < ActiveRecord::Base
 
       save!
     end
+
+    SystemMessage.new(upload.user).create('malicious_file', filename: upload.original_filename)
 
     upload.posts.each do |post|
       post.rebake!(invalidate_oneboxes: true, invalidate_broken_images: true)

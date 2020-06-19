@@ -16,3 +16,18 @@ en:
   reviewable_score_types:
     malicious_file:
       title: Malicious file
+  
+  system_messages:
+    malicious_file:
+      subject_template: A file uploaded by you was flagged as malicious
+      text_body_template: |
+        Hello,
+
+        Our antivirus flagged `%{filename}` as malicious.
+
+        The link was removed, and you won't be able to edit the posts where it was uploaded until the flag gets reviewed. Please keep in mind that the posts may be deleted after review.
+        
+        We apologize for the inconvenience.
+  
+  antivirus:
+    delete_reason: The user uploaded a malicious file. Deleted by %{performed_by}.

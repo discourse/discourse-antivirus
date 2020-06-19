@@ -1,12 +1,14 @@
 <div class='reviewable-upload'>
   <div class='reviewable-upload-contents'>
-    <div class='post-contents-wrapper'>
-      <div class='post-contents'>
-        <div class='post-body'>
-          {{{ reviewable.payload.post_cooked }}}
+    {{#if reviewable.upload_id}}
+      <div class='post-contents-wrapper'>
+        <div class='post-contents'>
+          <div class='post-body'>
+            {{html-safe reviewable.payload.post_cooked}}
+          </div>
         </div>
       </div>
-    </div>
+    {{/if}}
 
     {{reviewable-field classes='reviewable-upload-details scan-result'
                                   name=(i18n 'review.file.scan_result')
@@ -15,6 +17,10 @@
     {{reviewable-field classes='reviewable-upload-details filename'
                                   name=(i18n 'review.file.filename')
                                   value=reviewable.payload.original_filename}}
+
+    {{reviewable-field classes='reviewable-upload-details uploaded-by'
+                                  name=(i18n 'review.file.uploaded_by')
+                                  value=reviewable.payload.uploaded_by}}
   </div>
   {{yield}}
 </div>
