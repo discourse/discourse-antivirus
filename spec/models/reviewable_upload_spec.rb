@@ -5,7 +5,11 @@ require 'rails_helper'
 describe ReviewableUpload do
   fab!(:admin) { Fabricate(:admin) }
   fab!(:upload) { Fabricate(:upload) }
-  let(:reviewable) { ReviewableUpload.needs_review!(target: upload, created_by: Discourse.system_user) }
+  let(:reviewable) do
+    ReviewableUpload.needs_review!(
+      target: upload, created_by: Discourse.system_user, payload: { uploaded_to: [upload.post_ids] }
+    )
+  end
 
   describe 'performing actions' do
     describe '#perform_remove_file' do

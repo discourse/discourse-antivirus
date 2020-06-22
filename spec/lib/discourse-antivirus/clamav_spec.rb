@@ -13,7 +13,7 @@ describe DiscourseAntivirus::ClamAV do
     it 'returns false when the file is clear' do
       fake_socket = FakeTCPSocket.negative
 
-      scan_result = described_class.new(fake_socket, Discourse.store).scan_upload(upload)
+      scan_result = described_class.new(Discourse.store).scan_upload(upload, socket: fake_socket)
 
       expect(scan_result[:found]).to eq(false)
       assert_file_was_sent_through(fake_socket, file)
@@ -22,7 +22,7 @@ describe DiscourseAntivirus::ClamAV do
     it 'returns true when the file has a virus' do
       fake_socket = FakeTCPSocket.positive
 
-      scan_result = described_class.new(fake_socket, Discourse.store).scan_upload(upload)
+      scan_result = described_class.new(Discourse.store).scan_upload(upload, socket: fake_socket)
 
       expect(scan_result[:found]).to eq(true)
       assert_file_was_sent_through(fake_socket, file)
@@ -42,6 +42,8 @@ describe DiscourseAntivirus::ClamAV do
 
     expected << [0].pack('N')
     expected << ''
+
+    expected << "nEND\0"
 
     expect(fake_socket.received).to contain_exactly(*expected)
   end

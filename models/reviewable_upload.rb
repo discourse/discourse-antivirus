@@ -34,7 +34,7 @@ class ReviewableUpload < Reviewable
   end
 
   def perform_remove_file_and_delete_posts(performed_by, _args)
-    target.posts.each { |post| PostDestroyer.new(performed_by, post, defer_flags: true).destroy }
+    posts.each { |post| PostDestroyer.new(performed_by, post, defer_flags: true).destroy }
     target.destroy!
 
     successful_transition :deleted, :agreed
@@ -51,6 +51,10 @@ class ReviewableUpload < Reviewable
   end
 
   private
+
+  def posts
+    @posts ||= Post.where(id: payload["uploaded_to"])
+  end
 
   def user_deletion_opts(performed_by)
     base = {

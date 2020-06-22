@@ -7,3 +7,6 @@ plugins:
     default: localhost
   antivirus_clamav_port:
     default: 3310
+  antivirus_next_scan_at:
+    hidden: true
+    default: ''

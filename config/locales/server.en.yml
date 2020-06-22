@@ -2,7 +2,7 @@ en:
   site_settings:
     discourse_antivirus_enabled: "Enable discourse-antivirus plugin"
     antivirus_live_scan_images: Enable live scanning of images
-    antivirus_clamav_host: Hostname where the ClamAV service is running
+    antivirus_clamav_hostname: Hostname where the ClamAV service is running
     antivirus_clamav_port: Port where the ClamAV service is running
 
   scan:
