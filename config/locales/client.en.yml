@@ -1,3 +1,16 @@
 en:
   js:
-    discourse_antivirus:
+    review:
+      types:
+        reviewable_upload:
+          title: Flagged Upload
+      file:
+        scan_result: Scan Result
+        filename: Original Filename
+        uploaded_by: Uploaded By
+    antivirus:
+      remove_upload:
+        title: Remove upload
+      remove_file: Delete file
+      remove_file_and_delete_posts: Delete file + posts
+      remove_file_and_delete_user: Delete file + user

@@ -4,36 +4,30 @@ require 'rails_helper'
 require_relative '../../support/fake_tcp_socket'
 
 describe DiscourseAntivirus::ClamAV do
-  let(:file) do
-    Tempfile.new('filename').tap do |f|
-      f.write('contents')
-    end
-  end
+  fab!(:upload) { Fabricate(:image_upload) }
+  let(:file) { File.open(File.open(Discourse.store.path_for(upload))) }
 
   before { file.rewind }
 
-  describe '#virus?' do
+  describe '#scan_upload' do
     it 'returns false when the file is clear' do
-      response = "1: stream: OK\0"
-      fake_socket = FakeTCPSocket.new(response)
+      fake_socket = FakeTCPSocket.negative
 
-      scan_result = described_class.new(fake_socket).virus?(file)
+      scan_result = described_class.new(Discourse.store).scan_upload(upload, socket: fake_socket)
 
-      expect(scan_result).to eq(false)
+      expect(scan_result[:found]).to eq(false)
       assert_file_was_sent_through(fake_socket, file)
     end
 
     it 'returns true when the file has a virus' do
-      response = "1: stream: Win.Test.EICAR_HDB-1 FOUND\0"
-      fake_socket = FakeTCPSocket.new(response)
+      fake_socket = FakeTCPSocket.positive
 
-      scan_result = described_class.new(fake_socket).virus?(file)
+      scan_result = described_class.new(Discourse.store).scan_upload(upload, socket: fake_socket)
 
-      expect(scan_result).to eq(true)
+      expect(scan_result[:found]).to eq(true)
       assert_file_was_sent_through(fake_socket, file)
     end
   end
-
   def assert_file_was_sent_through(fake_socket, file)
     expected = [
       "nIDSESSION\n",
@@ -48,6 +42,8 @@ describe DiscourseAntivirus::ClamAV do
 
     expected << [0].pack('N')
     expected << ''
+
+    expected << "nEND\0"
 
     expect(fake_socket.received).to contain_exactly(*expected)
   end

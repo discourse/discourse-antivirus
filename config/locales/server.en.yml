@@ -1,9 +1,33 @@
 en:
   site_settings:
     discourse_antivirus_enabled: "Enable discourse-antivirus plugin"
-    live_scan_images: Enable live scanning of images
-    clamav_host: Hostname where the ClamAV service is running
-    clamav_port: Port where the ClamAV service is running
+    antivirus_live_scan_images: Enable live scanning of images
+    antivirus_clamav_hostname: Hostname where the ClamAV service is running
+    antivirus_clamav_port: Port where the ClamAV service is running
 
   scan:
     virus_found: The antivirus flagged this file as malicious, so it can't be uploaded.
+    quarantined: "[This file was removed because it was flagged as malicious]"
+  
+  reviewables:
+    reasons:
+      malicious_file: The antivirus flagged this file as malicious. See more at `antivirus` settings.
+
+  reviewable_score_types:
+    malicious_file:
+      title: Malicious file
+  
+  system_messages:
+    malicious_file:
+      subject_template: A file uploaded by you was flagged as malicious
+      text_body_template: |
+        Hello,
+
+        Our antivirus flagged `%{filename}` as malicious.
+
+        The link was removed, and you won't be able to edit the posts where it was uploaded until the flag gets reviewed. Please keep in mind that the posts may be deleted after review.
+        
+        We apologize for the inconvenience.
+  
+  antivirus:
+    delete_reason: The user uploaded a malicious file. Deleted by %{performed_by}.

@@ -1,5 +1,13 @@
 # frozen_string_literal: true
 class FakeTCPSocket
+  def self.positive
+    new("1: stream: Win.Test.EICAR_HDB-1 FOUND\0")
+  end
+
+  def self.negative
+    new("1: stream: OK\0")
+  end
+
   def initialize(canned_response)
     @canned_response = canned_response
     @received = []

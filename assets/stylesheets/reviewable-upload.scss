@@ -1,0 +1,26 @@
+.reviewable-upload {
+  width: 100%;
+  margin: 0.5em 0;
+
+  .reviewable-upload-contents {
+    margin-bottom: 2em;
+
+    .post-contents-wrapper {
+      margin: 1em;
+    }
+
+    .reviewable-upload-details {
+      border-bottom: 1px solid $primary-low;
+      margin: 1em 0;
+      display: flex;
+      align-items: center;
+
+      .name {
+        width: 12em;
+        font-weight: bold;
+        margin-right: 1em;
+      }
+    }
+  }
+}
+

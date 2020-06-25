@@ -1,10 +1,12 @@
 plugins:
   discourse_antivirus_enabled:
-    default: true
-    client: true
-  live_scan_images:
     default: false
-  clamav_hostname:
+  antivirus_live_scan_images:
+    default: false
+  antivirus_clamav_hostname:
     default: localhost
-  clamav_post:
+  antivirus_clamav_port:
     default: 3310
+  antivirus_next_scan_at:
+    hidden: true
+    default: ''
