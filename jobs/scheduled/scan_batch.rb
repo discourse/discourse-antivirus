@@ -5,7 +5,6 @@ module Jobs
     every 5.minutes
 
     def execute(_args)
-
       return unless SiteSetting.discourse_antivirus_enabled?
       scanner = DiscourseAntivirus::BackgroundScan.new(DiscourseAntivirus::ClamAV.instance)
       next_scan_at = SiteSetting.antivirus_next_scan_at

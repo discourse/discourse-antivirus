@@ -66,6 +66,62 @@ describe DiscourseAntivirus::BackgroundScan do
     end
   end
 
+  describe '.stats' do
+    it 'returns 1 scanned file' do
+      create_scanned_upload(scans: 1)
+
+      expect(described_class.stats[:scans]).to eq(1)
+    end
+
+    it 'returns the number of times each file was scanned' do
+      upload_a = create_scanned_upload(scans: 3)
+      upload_b = create_scanned_upload(scans: 2)
+
+      expect(described_class.stats[:scans]).to eq(upload_a.scans + upload_b.scans)
+    end
+
+    it 'returns 0 recently scanned files' do
+      create_scanned_upload(last_scanned_at: 3.days.ago)
+
+      expect(described_class.stats[:recently_scanned]).to be_zero
+    end
+
+    it 'returns 1 recently scanned file' do
+      create_scanned_upload(last_scanned_at: 6.hours.ago)
+
+      expect(described_class.stats[:recently_scanned]).to eq(1)
+    end
+
+    it 'returns 1 quarantined files' do
+      create_scanned_upload(quarantined: true)
+
+      expect(described_class.stats[:quarantined]).to eq(1)
+    end
+
+    it 'returns 0 quarantined files' do
+      create_scanned_upload(quarantined: false)
+
+      expect(described_class.stats[:quarantined]).to be_zero
+    end
+
+    it 'returns 1 found files if a upload is moved into quarantine' do
+      scanned_upload = create_scanned_upload
+      scanned_upload.move_to_quarantine!("scan_message")
+
+      expect(described_class.stats[:found]).to eq(1)
+    end
+
+    it 'returns 0 found files if there are no existing reviewables' do
+      create_scanned_upload
+
+      expect(described_class.stats[:found]).to be_zero
+    end
+
+    def create_scanned_upload(last_scanned_at: 6.hours.ago, quarantined: false, scans: 0)
+      ScannedUpload.create!(upload: upload, last_scanned_at: last_scanned_at, quarantined: quarantined, scans: scans)
+    end
+  end
+
   def build_scanner(quarantine_files:)
     socket = quarantine_files ? FakeTCPSocket.positive : FakeTCPSocket.negative
     fake_antivirus = DiscourseAntivirus::ClamAV.new(Discourse.store)

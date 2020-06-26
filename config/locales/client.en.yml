@@ -9,6 +9,20 @@ en:
         filename: Original Filename
         uploaded_by: Uploaded By
     antivirus:
+      title: Antivirus
+      version_title: Antivirus Version
+      stats_title: Background Scan Stats
+
+      version: Version
+      database_version: Database version
+      database_updated_at: Last database update
+
+      stats:
+        total_scans: Scanned Files
+        recently_scanned: Recently Scanned
+        quarantined: Quarantined
+        found: Found
+
       remove_upload:
         title: Remove upload
       remove_file: Delete file

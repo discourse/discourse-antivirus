@@ -11,11 +11,14 @@ register_asset 'stylesheets/reviewable-upload.scss'
 
 PLUGIN_NAME ||= 'DiscourseAntivirus'
 
-load File.expand_path('lib/discourse-antivirus/engine.rb', __dir__)
+load File.expand_path('lib/discourse_antivirus/engine.rb', __dir__)
+
+add_admin_route 'antivirus.title', 'antivirus'
 
 after_initialize do
-  require_dependency File.expand_path('../lib/discourse-antivirus/clamav.rb', __FILE__)
-  require_dependency File.expand_path('../lib/discourse-antivirus/background_scan.rb', __FILE__)
+  require_dependency File.expand_path('../app/controllers/discourse_antivirus/antivirus_controller.rb', __FILE__)
+  require_dependency File.expand_path('../lib/discourse_antivirus/clamav.rb', __FILE__)
+  require_dependency File.expand_path('../lib/discourse_antivirus/background_scan.rb', __FILE__)
   require_dependency File.expand_path('../models/scanned_upload.rb', __FILE__)
   require_dependency File.expand_path('../models/reviewable_upload.rb', __FILE__)
   require_dependency File.expand_path('../serializers/reviewable_upload_serializer.rb', __FILE__)

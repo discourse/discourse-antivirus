@@ -6,6 +6,7 @@ class CreateScannedUploads < ActiveRecord::Migration[6.0]
       t.integer :upload_id
       t.datetime :last_scanned_at
       t.boolean :quarantined, null: false, default: false
+      t.integer :scans, null: false, default: 0
       t.timestamps
     end
   end

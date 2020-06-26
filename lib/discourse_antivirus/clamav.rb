@@ -2,7 +2,8 @@
 
 module DiscourseAntivirus
   class ClamAV
-    VIRUS_FOUND = Class.new(StandardError)
+    PLUGIN_NAME = 'discourse-antivirus'
+    STORE_KEY = 'clamav-version'
 
     def self.instance
       new(Discourse.store)
@@ -22,23 +23,40 @@ module DiscourseAntivirus
       )
     end
 
+    def version(socket: self.default_socket)
+      PluginStore.get(PLUGIN_NAME, STORE_KEY) || update_version(socket: socket)
+    end
+
+    def update_version(socket: self.default_socket)
+      antivirus_version = with_session(socket) do
+        socket.send("zVERSION\0", 0)
+        read_until(socket, "\0")
+      end
+
+      antivirus_version = antivirus_version.gsub('1: ', '').strip.split('/')
+      antivirus_version = {
+        antivirus: antivirus_version[0],
+        database: antivirus_version[1],
+        updated_at: antivirus_version[2]
+      }
+
+      PluginStore.set(PLUGIN_NAME, STORE_KEY, antivirus_version)
+      antivirus_version
+    end
+
     def scan_multiple_uploads(uploads, socket: self.default_socket)
       return [] if uploads.blank?
 
-      open_session(socket)
+      with_session(socket) do
+        uploads.each_with_index.map do |upload, index|
+          file = get_uploaded_file(upload)
+          scan_response = stream_file(socket, file)
 
-      results = uploads.each_with_index.map do |upload, index|
-        file = get_uploaded_file(upload)
-        scan_response = stream_file(socket, file)
-
-        parse_response(scan_response, index + 1).tap do |result|
-          result[:upload] = upload
+          parse_response(scan_response, index + 1).tap do |result|
+            result[:upload] = upload
+          end
         end
       end
-
-      close_socket(socket)
-
-      results
     end
 
     def scan_upload(upload, socket: self.default_socket)
@@ -50,9 +68,7 @@ module DiscourseAntivirus
     end
 
     def scan_file(file, socket: self.default_socket)
-      open_session(socket)
-      scan_response = stream_file(socket, file)
-      close_socket(socket)
+      scan_response = with_session(socket) { stream_file(socket, file) }
 
       parse_response(scan_response)
     end
@@ -60,6 +76,11 @@ module DiscourseAntivirus
     private
 
     attr_reader :store
+
+    def with_session(socket)
+      open_session(socket)
+      yield.tap { |_| close_socket(socket) }
+    end
 
     def parse_response(scan_response, index = 1)
       {
