@@ -3,5 +3,5 @@
 require_dependency 'reviewable_serializer'
 
 class ReviewableUploadSerializer < ReviewableSerializer
-  payload_attributes :scan_message, :original_filename, :post_cooked, :uploaded_by
+  payload_attributes :scan_message, :original_filename, :post_raw, :uploaded_by
 end

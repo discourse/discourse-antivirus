@@ -1,7 +1,7 @@
-import DiscourseRoute from "discourse/routes/discourse";
+import Route from "@ember/routing/route";
 import { ajax } from "discourse/lib/ajax";
 
-export default DiscourseRoute.extend({
+export default Route.extend({
   controllerName: "admin-plugins-antivirus",
 
   model() {

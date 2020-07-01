@@ -8,7 +8,7 @@ class ScannedUpload < ActiveRecord::Base
 
     system_user = Discourse.system_user
     upload_link = "#{Upload.base62_sha1(upload.sha1)}#{upload.extension.present? ? ".#{upload.extension}" : ""}"
-    original_post_cooked_example = upload.posts.last&.cooked
+    original_post_raw_example = upload.posts.last&.raw
 
     self.class.transaction do
       self.quarantined = true
@@ -24,14 +24,14 @@ class ScannedUpload < ActiveRecord::Base
         payload: {
           scan_message: scan_message,
           original_filename: upload.original_filename,
-          post_cooked: original_post_cooked_example,
+          post_raw: original_post_raw_example,
           uploaded_by: upload.user.username,
           uploaded_to: uploaded_to
         }
       )
 
       reviewable.add_score(
-        system_user, PostActionType.types[:malicious_file],
+        system_user, ReviewableScore.types[:malicious_file],
         created_at: reviewable.created_at, reason: 'malicious_file'
       )
 
