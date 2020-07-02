@@ -9,6 +9,9 @@
 enabled_site_setting :discourse_antivirus_enabled
 register_asset 'stylesheets/reviewable-upload.scss'
 
+# TODO: Remove after 2.6 gets released
+register_asset 'stylesheets/hide-malicious-file-flag.scss'
+
 PLUGIN_NAME ||= 'DiscourseAntivirus'
 
 load File.expand_path('lib/discourse_antivirus/engine.rb', __dir__)
@@ -26,13 +29,18 @@ after_initialize do
 
   register_reviewable_type ReviewableUpload
 
-  replace_flags(settings: PostActionType.flag_settings) do |settings, next_flag_id|
-    settings.add(
-      next_flag_id,
-      :malicious_file,
-      topic_type: true,
-      notify_type: true
-    )
+  # TODO: Remove after 2.6 gets released
+  if ReviewableScore.respond_to?(:add_new_types)
+    replace_flags(settings: PostActionType.flag_settings, score_type_names: %i[malicious_file])
+  else
+    replace_flags(settings: PostActionType.flag_settings) do |settings, next_flag_id|
+      settings.add(
+        next_flag_id,
+        :malicious_file,
+        topic_type: true,
+        notify_type: true
+      )
+    end
   end
 
   on(:before_upload_creation) do |file, is_image|
