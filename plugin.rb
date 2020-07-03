@@ -26,6 +26,7 @@ after_initialize do
   require_dependency File.expand_path('../models/reviewable_upload.rb', __FILE__)
   require_dependency File.expand_path('../serializers/reviewable_upload_serializer.rb', __FILE__)
   require_dependency File.expand_path('../jobs/scheduled/scan_batch.rb', __FILE__)
+  require_dependency File.expand_path('../jobs/scheduled/fetch_antivirus_version.rb', __FILE__)
 
   register_reviewable_type ReviewableUpload
 

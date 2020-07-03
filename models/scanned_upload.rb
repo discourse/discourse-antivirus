@@ -3,8 +3,20 @@
 class ScannedUpload < ActiveRecord::Base
   belongs_to :upload
 
+  def mark_as_scanned_with(database_version)
+    self.scans += 1
+    self.virus_database_version_used = database_version
+
+    first_scan = self.created_at || Date.today
+    week_number = first_scan.to_date.step(Date.today, 7).count
+
+    if week_number > 1
+      self.next_scan_at = self.next_scan_at.nil? ? 1.week.from_now : (week_number - 1).weeks.from_now
+    end
+  end
+
   def move_to_quarantine!(scan_message)
-    return if quarantined
+    return if self.quarantined
 
     system_user = Discourse.system_user
     upload_link = "#{Upload.base62_sha1(upload.sha1)}#{upload.extension.present? ? ".#{upload.extension}" : ""}"

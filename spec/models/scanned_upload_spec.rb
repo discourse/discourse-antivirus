@@ -32,4 +32,38 @@ describe ScannedUpload do
       expect(reviewable.payload['scan_message']).to eq(scan_message)
     end
   end
+
+  describe '#mark_as_scanned_with' do
+    let(:database_version) { 25852 }
+
+    it 'sets attributes' do
+      scans = scanned_upload.scans
+      scanned_upload.created_at = 1.day.ago
+
+      scanned_upload.mark_as_scanned_with(database_version)
+
+      expect(scanned_upload.quarantined).to eq(false)
+      expect(scanned_upload.virus_database_version_used).to eq(database_version)
+      expect(scanned_upload.next_scan_at).to be_nil
+      expect(scanned_upload.scans).to eq(scans + 1)
+    end
+
+    it 'sets the next scan to one week from now after the first week' do
+      scanned_upload.created_at = 1.week.ago
+      scanned_upload.next_scan_at = nil
+
+      scanned_upload.mark_as_scanned_with(database_version)
+
+      expect(scanned_upload.next_scan_at).to eq_time(1.week.from_now)
+    end
+
+    it 'sets the next scan to x weeks in the future where x is the number of weeks since created' do
+      scanned_upload.created_at = 2.weeks.ago
+      scanned_upload.next_scan_at = 1.day.ago
+
+      scanned_upload.mark_as_scanned_with(database_version)
+
+      expect(scanned_upload.next_scan_at).to eq_time(2.weeks.from_now)
+    end
+  end
 end

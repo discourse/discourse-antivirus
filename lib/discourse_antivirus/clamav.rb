@@ -2,6 +2,7 @@
 
 module DiscourseAntivirus
   class ClamAV
+    VIRUS_FOUND = Class.new(StandardError)
     PLUGIN_NAME = 'discourse-antivirus'
     STORE_KEY = 'clamav-version'
 
@@ -36,7 +37,7 @@ module DiscourseAntivirus
       antivirus_version = antivirus_version.gsub('1: ', '').strip.split('/')
       antivirus_version = {
         antivirus: antivirus_version[0],
-        database: antivirus_version[1],
+        database: antivirus_version[1].to_i,
         updated_at: antivirus_version[2]
       }
 
@@ -54,6 +55,7 @@ module DiscourseAntivirus
 
           parse_response(scan_response, index + 1).tap do |result|
             result[:upload] = upload
+            yield(upload, result) if block_given?
           end
         end
       end

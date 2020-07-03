@@ -43,19 +43,19 @@ describe DiscourseAntivirus::ClamAV do
       version = antivirus.version
 
       expect(version[:antivirus]).to eq(antivirus_version)
-      expect(version[:database]).to eq(database_version)
+      expect(version[:database]).to eq(database_version.to_i)
       expect(version[:updated_at]).to eq(last_update)
       assert_version_was_requested(socket)
     end
 
     it 'directly returns the version from the plugin store without fetching' do
-      version_data = { antivirus: antivirus_version, database: database_version, updated_at: last_update }
+      version_data = { antivirus: antivirus_version, database: database_version.to_i, updated_at: last_update }
       PluginStore.set(described_class::PLUGIN_NAME, described_class::STORE_KEY, version_data)
 
       version = antivirus.version
 
       expect(version[:antivirus]).to eq(antivirus_version)
-      expect(version[:database]).to eq(database_version)
+      expect(version[:database]).to eq(database_version.to_i)
       expect(version[:updated_at]).to eq(last_update)
       expect(socket.received).to be_empty
     end
@@ -64,7 +64,7 @@ describe DiscourseAntivirus::ClamAV do
       version = antivirus.version(socket: socket)
 
       expect(version[:antivirus]).to eq(antivirus_version)
-      expect(version[:database]).to eq(database_version)
+      expect(version[:database]).to eq(database_version.to_i)
       expect(version[:updated_at]).to eq(last_update)
       assert_version_was_requested(socket)
     end

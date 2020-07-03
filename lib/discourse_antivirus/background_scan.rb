@@ -10,7 +10,7 @@ module DiscourseAntivirus
       scanned_upload_stats = DB.query_single(<<~SQL
         SELECT 
           SUM(scans),
-          SUM(CASE WHEN last_scanned_at >= NOW() - INTERVAL '24 HOURS' THEN 1 ELSE 0 END),
+          SUM(CASE WHEN updated_at >= NOW() - INTERVAL '24 HOURS' THEN 1 ELSE 0 END),
           SUM(CASE WHEN quarantined THEN 1 ELSE 0 END)
         FROM scanned_uploads
       SQL
@@ -24,35 +24,38 @@ module DiscourseAntivirus
        }
     end
 
-    def scan_batch(batch_size: 1000, scanned_before:)
-      scanned = 0
+    def current_database_version
+      @antivirus.version[:database]
+    end
 
+    def scan_batch(batch_size: 1000)
       Upload
         .where('uploads.id >= 1 AND uploads.user_id >= 1')
         .joins('LEFT OUTER JOIN scanned_uploads su ON uploads.id = su.upload_id')
-        .where('su.id IS NULL OR (NOT su.quarantined AND su.last_scanned_at <= ?)', scanned_before)
+        .where('
+          su.id IS NULL OR
+          (NOT su.quarantined AND (
+            (
+              su.next_scan_at IS NULL AND su.virus_database_version_used < ?) OR
+              su.next_scan_at < NOW()
+            )
+          )',
+          current_database_version
+        )
         .limit(batch_size)
-        .find_in_batches do |uploads|
-          scanned += uploads.size
-          scan(uploads)
-        end
-
-      scanned
+        .find_in_batches { |uploads| scan(uploads) }
     end
 
     def scan(uploads)
       return if uploads.blank?
-      scan_results = @antivirus.scan_multiple_uploads(uploads)
 
-      scan_results.each do |result|
-        scanned_upload = ScannedUpload.find_or_initialize_by(upload: result[:upload])
-        scanned_upload.last_scanned_at = Time.zone.now
-        scanned_upload.scans += 1
+      @antivirus.scan_multiple_uploads(uploads) do |upload, result|
+        scanned_upload = ScannedUpload.find_or_initialize_by(upload: upload)
+        scanned_upload.mark_as_scanned_with(current_database_version)
 
         if result[:found]
           scanned_upload.move_to_quarantine!(result[:message])
         else
-          scanned_upload.quarantined = false
           scanned_upload.save!
         end
       end
