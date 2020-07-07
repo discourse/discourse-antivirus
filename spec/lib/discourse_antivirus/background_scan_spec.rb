@@ -11,7 +11,7 @@ describe DiscourseAntivirus::BackgroundScan do
     PluginStore.set(
       DiscourseAntivirus::ClamAV::PLUGIN_NAME,
       DiscourseAntivirus::ClamAV::STORE_KEY,
-      version_data
+      [version_data]
     )
   end
 
@@ -162,10 +162,13 @@ describe DiscourseAntivirus::BackgroundScan do
     end
   end
 
+  def build_fake_pool(socket:)
+    OpenStruct.new(tcp_socket: socket, all_tcp_sockets: [socket])
+  end
+
   def build_scanner(quarantine_files:)
     socket = quarantine_files ? FakeTCPSocket.positive : FakeTCPSocket.negative
-    fake_antivirus = DiscourseAntivirus::ClamAV.new(Discourse.store)
-    fake_antivirus.override_default_socket(socket)
-    described_class.new(fake_antivirus)
+    antivirus = DiscourseAntivirus::ClamAV.new(Discourse.store, build_fake_pool(socket: socket))
+    described_class.new(antivirus)
   end
 end

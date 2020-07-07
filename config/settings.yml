@@ -3,7 +3,5 @@ plugins:
     default: false
   antivirus_live_scan_images:
     default: false
-  antivirus_clamav_hostname:
-    default: localhost
-  antivirus_clamav_port:
-    default: 3310
+  antivirus_srv_record:
+    default: ''

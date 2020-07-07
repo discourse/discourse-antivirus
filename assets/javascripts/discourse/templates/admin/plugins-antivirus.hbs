@@ -10,11 +10,13 @@
     </tr>
   </thead>
   <tbody>
-    <tr>
-      <td>{{model.antivirus}}</td>
-      <td>{{model.database}}</td>
-      <td>{{model.updated_at}}</td>
-    </tr>
+    {{#each model.versions as |version|}}
+      <tr>
+        <td>{{version.antivirus}}</td>
+        <td>{{version.database}}</td>
+        <td>{{version.updated_at}}</td>
+      </tr>
+    {{/each}}
   </tbody>
 </table>
 

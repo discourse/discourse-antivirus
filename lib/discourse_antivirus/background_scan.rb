@@ -25,7 +25,7 @@ module DiscourseAntivirus
     end
 
     def current_database_version
-      @antivirus.version[:database]
+      @antivirus.versions.first[:database]
     end
 
     def scan_batch(batch_size: 1000)

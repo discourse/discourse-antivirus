@@ -6,7 +6,7 @@ module DiscourseAntivirus
 
     def index
       render json: {
-        antivirus: DiscourseAntivirus::ClamAV.instance.version,
+        versions: DiscourseAntivirus::ClamAV.instance.versions,
         background_scan_stats: DiscourseAntivirus::BackgroundScan.stats
       }
     end

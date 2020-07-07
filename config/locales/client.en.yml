@@ -10,7 +10,7 @@ en:
         uploaded_by: Uploaded By
     antivirus:
       title: Antivirus
-      version_title: Antivirus Version
+      version_title: Antivirus Versions
       stats_title: Background Scan Stats
 
       version: Version

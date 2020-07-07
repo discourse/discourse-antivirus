@@ -10,7 +10,7 @@ export default Route.extend({
 
   setupController(controller, model) {
     controller.setProperties({
-      model: model.antivirus,
+      model: model,
       background_scan_stats: model.background_scan_stats
     });
   }

@@ -7,15 +7,15 @@ describe DiscourseAntivirus::ClamAV do
   fab!(:upload) { Fabricate(:image_upload) }
   let(:file) { File.open(File.open(Discourse.store.path_for(upload))) }
 
-  let(:antivirus) { described_class.new(Discourse.store) }
-
   before { file.rewind }
 
   describe '#scan_upload' do
     it 'returns false when the file is clear' do
       fake_socket = FakeTCPSocket.negative
+      pool = build_fake_pool(socket: fake_socket)
+      antivirus = build_antivirus(pool)
 
-      scan_result = antivirus.scan_upload(upload, socket: fake_socket)
+      scan_result = antivirus.scan_upload(upload)
 
       expect(scan_result[:found]).to eq(false)
       assert_file_was_sent_through(fake_socket, file)
@@ -23,8 +23,10 @@ describe DiscourseAntivirus::ClamAV do
 
     it 'returns true when the file has a virus' do
       fake_socket = FakeTCPSocket.positive
+      pool = build_fake_pool(socket: fake_socket)
+      antivirus = build_antivirus(pool)
 
-      scan_result = antivirus.scan_upload(upload, socket: fake_socket)
+      scan_result = antivirus.scan_upload(upload)
 
       expect(scan_result[:found]).to eq(true)
       assert_file_was_sent_through(fake_socket, file)
@@ -38,9 +40,15 @@ describe DiscourseAntivirus::ClamAV do
 
     let(:socket) { FakeTCPSocket.new("1: #{antivirus_version}/#{database_version}/#{last_update}\0") }
 
+    let(:antivirus) do
+      build_antivirus(
+        build_fake_pool(socket: socket)
+      )
+    end
+
     it 'returns the version from the plugin store after fetching the last one' do
-      antivirus.update_version(socket: socket)
-      version = antivirus.version
+      antivirus.update_versions
+      version = antivirus.versions.first
 
       expect(version[:antivirus]).to eq(antivirus_version)
       expect(version[:database]).to eq(database_version.to_i)
@@ -50,9 +58,9 @@ describe DiscourseAntivirus::ClamAV do
 
     it 'directly returns the version from the plugin store without fetching' do
       version_data = { antivirus: antivirus_version, database: database_version.to_i, updated_at: last_update }
-      PluginStore.set(described_class::PLUGIN_NAME, described_class::STORE_KEY, version_data)
+      PluginStore.set(described_class::PLUGIN_NAME, described_class::STORE_KEY, [version_data])
 
-      version = antivirus.version
+      version = antivirus.versions.first
 
       expect(version[:antivirus]).to eq(antivirus_version)
       expect(version[:database]).to eq(database_version.to_i)
@@ -61,7 +69,7 @@ describe DiscourseAntivirus::ClamAV do
     end
 
     it 'fetches the last version if the plugin store does not have it' do
-      version = antivirus.version(socket: socket)
+      version = antivirus.versions.first
 
       expect(version[:antivirus]).to eq(antivirus_version)
       expect(version[:database]).to eq(database_version.to_i)
@@ -98,5 +106,13 @@ describe DiscourseAntivirus::ClamAV do
     expected << "nEND\0"
 
     expect(fake_socket.received).to contain_exactly(*expected)
+  end
+
+  def build_fake_pool(socket:)
+    OpenStruct.new(tcp_socket: socket, all_tcp_sockets: [socket])
+  end
+
+  def build_antivirus(pool)
+    described_class.new(Discourse.store, pool)
   end
 end

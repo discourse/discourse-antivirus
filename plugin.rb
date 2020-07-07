@@ -6,6 +6,8 @@
 # authors: romanrizzi
 # url: https://github.com/romanrizzi
 
+gem 'dns-sd', '0.1.3'
+
 enabled_site_setting :discourse_antivirus_enabled
 register_asset 'stylesheets/reviewable-upload.scss'
 
@@ -20,6 +22,7 @@ add_admin_route 'antivirus.title', 'antivirus'
 
 after_initialize do
   require_dependency File.expand_path('../app/controllers/discourse_antivirus/antivirus_controller.rb', __FILE__)
+  require_dependency File.expand_path('../lib/discourse_antivirus/clamav_services_pool.rb', __FILE__)
   require_dependency File.expand_path('../lib/discourse_antivirus/clamav.rb', __FILE__)
   require_dependency File.expand_path('../lib/discourse_antivirus/background_scan.rb', __FILE__)
   require_dependency File.expand_path('../models/scanned_upload.rb', __FILE__)
@@ -46,6 +49,7 @@ after_initialize do
 
   on(:before_upload_creation) do |file, is_image|
     should_scan_file = !is_image || SiteSetting.antivirus_live_scan_images
+    should_scan_file &&= SiteSetting.antivirus_srv_record.present?
 
     if should_scan_file && DiscourseAntivirus::ClamAV.instance.scan_file(file)[:found]
       raise DiscourseAntivirus::ClamAV::VIRUS_FOUND, I18n.t('scan.virus_found')
