@@ -2,6 +2,16 @@
 
 module DiscourseAntivirus
   class ClamAVServicesPool
+    def self.correctly_configured?
+      return true if Rails.env.test?
+
+      if Rails.env.production?
+        SiteSetting.antivirus_srv_record.present?
+      else
+        GlobalSetting.respond_to?(:clamav_hostname) && GlobalSetting.respond_to?(:clamav_port)
+      end
+    end
+
     def tcp_socket
       build_socket(service_instance.targets.first)
     end
@@ -17,9 +27,18 @@ module DiscourseAntivirus
     end
 
     def service_instance
-      @instance ||= DNSSD::ServiceInstance.new(
-        Resolv::DNS::Name.create(SiteSetting.antivirus_srv_record)
-      )
+      @instance ||= if Rails.env.production?
+        DNSSD::ServiceInstance.new(
+          Resolv::DNS::Name.create(SiteSetting.antivirus_srv_record)
+        )
+      else
+        OpenStruct.new(targets: [
+          OpenStruct.new(
+            hostname: GlobalSetting.clamav_hostname,
+            port: GlobalSetting.clamav_port
+          )
+        ])
+      end
     end
   end
 end

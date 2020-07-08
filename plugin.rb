@@ -49,7 +49,7 @@ after_initialize do
 
   on(:before_upload_creation) do |file, is_image|
     should_scan_file = !is_image || SiteSetting.antivirus_live_scan_images
-    should_scan_file &&= SiteSetting.antivirus_srv_record.present?
+    should_scan_file &&= DiscourseAntivirus::ClamAVServicesPool.correctly_configured?
 
     if should_scan_file && DiscourseAntivirus::ClamAV.instance.scan_file(file)[:found]
       raise DiscourseAntivirus::ClamAV::VIRUS_FOUND, I18n.t('scan.virus_found')
