@@ -4,11 +4,11 @@ Scan your Discourse uploads using ClamAV.
 
 ## Using the plugin in production
 
-To use this plugin in production, you must provide an SRV record that resolves to the hostnames/ports were ClamAV is running. See the `antivirus_srv_record` site setting.
+To use this plugin in production, you must provide an SRV record that resolves to the hostnames/ports where ClamAV is running. See the `antivirus_srv_record` site setting.
 
 ## Using the plugin locally
 
-To communicate with your local ClamAV server, add `clamav_hostname` and `clamav_port` variables to your `discourse.conf` file.
+To communicate with your local ClamAV server, add the `clamav_hostname` and `clamav_port` variables to your `discourse.conf` file.
 
 ## Background scans
 
