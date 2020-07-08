@@ -4,7 +4,7 @@
 # about: Scan uploads
 # version: 0.1
 # authors: romanrizzi
-# url: https://github.com/romanrizzi
+# url: https://github.com/discourse/discourse-antivirus
 
 gem 'dns-sd', '0.1.3'
 
