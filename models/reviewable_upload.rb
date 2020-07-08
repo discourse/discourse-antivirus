@@ -28,14 +28,14 @@ class ReviewableUpload < Reviewable
   end
 
   def perform_remove_file(performed_by, _args)
-    target.destroy!
+    remove_upload!
 
     successful_transition :deleted, :agreed
   end
 
   def perform_remove_file_and_delete_posts(performed_by, _args)
     posts.each { |post| PostDestroyer.new(performed_by, post, defer_flags: true).destroy }
-    target.destroy!
+    remove_upload!
 
     successful_transition :deleted, :agreed
   end
@@ -45,12 +45,17 @@ class ReviewableUpload < Reviewable
       UserDestroyer.new(performed_by).destroy(target.user, user_deletion_opts(performed_by))
     end
 
-    target.destroy!
+    remove_upload!
 
     successful_transition :deleted, :agreed
   end
 
   private
+
+  def remove_upload!
+    ScannedUpload.where(upload: target).delete_all
+    target.destroy!
+  end
 
   def posts
     @posts ||= Post.where(id: payload["uploaded_to"])

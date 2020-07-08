@@ -11,6 +11,8 @@ describe ReviewableUpload do
     )
   end
 
+  before { ScannedUpload.create!(upload: upload, quarantined: true) }
+
   describe 'performing actions' do
     describe '#perform_remove_file' do
       it 'removes the upload' do
@@ -53,6 +55,7 @@ describe ReviewableUpload do
 
       def assert_upload_destroyed(reviewable)
         expect(reviewable.target).to be_nil
+        expect(ScannedUpload.where(upload: upload).exists?).to eq(false)
         expect(reviewable.status).to eq(Reviewable.statuses[:deleted])
       end
     end
