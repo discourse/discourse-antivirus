@@ -1,16 +1,29 @@
 # discourse-antivirus
 
-discourse-antivirus is a plugin for ...
+Scan your Discourse uploads using ClamAV.
 
-## Installation
+## Using the plugin in production
 
-Follow [Install a Plugin](https://meta.discourse.org/t/install-a-plugin/19157)
-how-to from the official Discourse Meta, using `git clone https://github.com/romanrizzi/discourse-antivirus.git`
-as the plugin command.
+To use this plugin in production, you must provide an SRV record that resolves to the hostnames/ports were ClamAV is running. See the `antivirus_srv_record` site setting.
 
-## Usage
+## Using the plugin locally
 
-## Feedback
+To communicate with your local ClamAV server, add `clamav_hostname` and `clamav_port` variables to your `discourse.conf` file.
 
-If you have issues or suggestions for the plugin, please bring them up on
-[Discourse Meta](https://meta.discourse.org).
+## Background scans
+
+The plugin will perform background scans regularly. We use the following cadence to scan files: 
+
+- Scan an upload if we never scanned it before.
+- Scan on every ClamAV database update until the upload is one week old.
+- Re-scan occasionally but at ever-increasing intervals independently of definition updates
+
+## Real-time Scanning
+
+We scan uploads before they get uploaded to the store by listening to the `:before_upload_creation` event, and sending the file to the antivirus. 
+
+We skip images by default, enable the `antivirus_live_scan_images` site setting if you want to real-time scan them.
+
+## Testing the plugin
+
+If you're looking for a file to upload and test the plugin yourself, take a look at the [EICAR test file](https://en.wikipedia.org/wiki/EICAR_test_file)
