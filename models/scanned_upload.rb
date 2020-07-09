@@ -7,8 +7,8 @@ class ScannedUpload < ActiveRecord::Base
     self.scans += 1
     self.virus_database_version_used = database_version
 
-    first_scan = self.created_at || Date.today
-    week_number = first_scan.to_date.step(Date.today, 7).count
+    upload_created_at = upload.created_at || Date.today
+    week_number = upload_created_at.to_date.step(Date.today, 7).count
 
     if week_number > 1
       self.next_scan_at = self.next_scan_at.nil? ? 1.week.from_now : (week_number - 1).weeks.from_now

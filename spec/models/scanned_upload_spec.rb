@@ -38,7 +38,7 @@ describe ScannedUpload do
 
     it 'sets attributes' do
       scans = scanned_upload.scans
-      scanned_upload.created_at = 1.day.ago
+      upload.created_at = 1.day.ago
 
       scanned_upload.mark_as_scanned_with(database_version)
 
@@ -49,7 +49,7 @@ describe ScannedUpload do
     end
 
     it 'sets the next scan to one week from now after the first week' do
-      scanned_upload.created_at = 1.week.ago
+      upload.created_at = 1.week.ago
       scanned_upload.next_scan_at = nil
 
       scanned_upload.mark_as_scanned_with(database_version)
@@ -58,7 +58,7 @@ describe ScannedUpload do
     end
 
     it 'sets the next scan to x weeks in the future where x is the number of weeks since created' do
-      scanned_upload.created_at = 2.weeks.ago
+      upload.created_at = 2.weeks.ago
       scanned_upload.next_scan_at = 1.day.ago
 
       scanned_upload.mark_as_scanned_with(database_version)
