@@ -15,7 +15,7 @@ class ReviewableUpload < Reviewable
     build_action(actions, :remove_file, bundle: reject, icon: 'thumbs-up')
     build_action(actions, :remove_file_and_delete_posts, bundle: reject, icon: 'trash-alt')
 
-    if guardian.can_delete_user?(target.user)
+    if target_created_by && guardian.can_delete_user?(target_created_by)
       build_action(
         actions,
         :remove_file_and_delete_user,
@@ -41,8 +41,8 @@ class ReviewableUpload < Reviewable
   end
 
   def perform_remove_file_and_delete_user(performed_by, _args)
-    if Guardian.new(performed_by).can_delete_user?(target.user)
-      UserDestroyer.new(performed_by).destroy(target.user, user_deletion_opts(performed_by))
+    if target_created_by && Guardian.new(performed_by).can_delete_user?(target_created_by)
+      UserDestroyer.new(performed_by).destroy(target_created_by, user_deletion_opts(performed_by))
     end
 
     remove_upload!
@@ -53,8 +53,8 @@ class ReviewableUpload < Reviewable
   private
 
   def remove_upload!
-    ScannedUpload.where(upload: target).delete_all
-    target.destroy!
+    ScannedUpload.where(upload_id: target_id).delete_all
+    target.destroy! if target
   end
 
   def posts

@@ -41,7 +41,7 @@ class ScannedUpload < ActiveRecord::Base
           uploaded_to: uploaded_to
         }
       )
-
+      reviewable.update!(target_created_by: upload.user)
       reviewable.add_score(
         system_user, ReviewableScore.types[:malicious_file],
         created_at: reviewable.created_at, reason: 'malicious_file'

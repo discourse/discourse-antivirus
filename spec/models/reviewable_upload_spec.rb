@@ -8,7 +8,7 @@ describe ReviewableUpload do
   let(:reviewable) do
     ReviewableUpload.needs_review!(
       target: upload, created_by: Discourse.system_user, payload: { uploaded_to: [upload.post_ids] }
-    )
+    ).tap { |r| r.update!(target_created_by: upload.user) }
   end
 
   before { ScannedUpload.create!(upload: upload, quarantined: true) }
