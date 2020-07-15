@@ -1,14 +1,21 @@
+{{#if reviewable.topic}}
+  <div class="flagged-post-header">
+    {{reviewable-topic-link reviewable=reviewable tagName=""}}
+  </div>
+{{/if}}
+
 <div class='reviewable-upload'>
   <div class='reviewable-upload-contents'>
-    {{#if reviewable.upload_id}}
       <div class='post-contents-wrapper'>
+        {{#if reviewable.target_created_by}}
+          {{reviewable-created-by user=reviewable.target_created_by tagName=""}}
+        {{/if}}
         <div class='post-contents'>
-          <div class='post-body'>
+          <div class='post-body disable-links-to-flagged-upload'>
             {{cook-text reviewable.payload.post_raw}}
           </div>
         </div>
       </div>
-    {{/if}}
 
     {{reviewable-field classes='reviewable-upload-details scan-result'
                                   name=(i18n 'review.file.scan_result')

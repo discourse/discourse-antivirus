@@ -33,6 +33,7 @@ class ScannedUpload < ActiveRecord::Base
 
       reviewable = ReviewableUpload.needs_review!(
         created_by: system_user, target: upload, reviewable_by_moderator: true,
+        topic: upload.posts.last&.topic,
         payload: {
           scan_message: scan_message,
           original_filename: upload.original_filename,
