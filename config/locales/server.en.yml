@@ -5,8 +5,8 @@ en:
     antivirus_srv_record: SRV record used to discover ClamAV services
 
   scan:
-    virus_found: The antivirus flagged this file as malicious, so it can't be uploaded.
-    quarantined: "[This file was removed because it was flagged as malicious]"
+    virus_found: The antivirus flagged this file as potentially malicious, so it can't be uploaded.
+    quarantined: "[This file was removed because it was flagged as potentially malicious]"
   
   reviewables:
     reasons:
@@ -22,7 +22,7 @@ en:
       text_body_template: |
         Hello,
 
-        Our antivirus flagged `%{filename}` as malicious.
+        Our antivirus flagged `%{filename}` as potentially malicious.
 
         The link was removed, and you won't be able to edit the posts where it was uploaded until the flag gets reviewed. Please keep in mind that the posts may be deleted after review.
         
