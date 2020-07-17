@@ -12,6 +12,8 @@ class ScannedUpload < ActiveRecord::Base
 
     if week_number > 1
       self.next_scan_at = self.next_scan_at.nil? ? 1.week.from_now : (week_number - 1).weeks.from_now
+    else
+      self.next_scan_at = nil
     end
   end
 

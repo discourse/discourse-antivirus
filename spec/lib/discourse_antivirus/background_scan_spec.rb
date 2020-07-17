@@ -143,7 +143,7 @@ describe DiscourseAntivirus::BackgroundScan do
     end
 
     it 'returns 1 recently scanned file' do
-      create_scanned_upload(updated_at: 6.hours.ago)
+      create_scanned_upload(scans: 1, updated_at: 6.hours.ago)
 
       expect(described_class.stats[:recently_scanned]).to eq(1)
     end

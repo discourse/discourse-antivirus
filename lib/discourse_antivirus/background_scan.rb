@@ -10,7 +10,7 @@ module DiscourseAntivirus
       scanned_upload_stats = DB.query_single(<<~SQL
         SELECT 
           SUM(scans),
-          SUM(CASE WHEN updated_at >= NOW() - INTERVAL '24 HOURS' THEN 1 ELSE 0 END),
+          SUM(CASE WHEN scans > 0 AND updated_at >= NOW() - INTERVAL '24 HOURS' THEN 1 ELSE 0 END),
           SUM(CASE WHEN quarantined THEN 1 ELSE 0 END)
         FROM scanned_uploads
       SQL

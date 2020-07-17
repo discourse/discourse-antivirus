@@ -50,6 +50,15 @@ describe ScannedUpload do
       expect(scanned_upload.scans).to eq(scans + 1)
     end
 
+    it 'resets the next_scan_at if the upload is less than a week old' do
+      upload.created_at = 1.day.ago
+      scanned_upload.next_scan_at = 1.day.ago
+
+      scanned_upload.mark_as_scanned_with(database_version)
+
+      expect(scanned_upload.next_scan_at).to be_nil
+    end
+
     it 'sets the next scan to one week from now after the first week' do
       upload.created_at = 1.week.ago
       scanned_upload.next_scan_at = nil
