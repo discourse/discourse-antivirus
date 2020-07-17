@@ -51,13 +51,23 @@ module DiscourseAntivirus
 
       @antivirus.scan_multiple_uploads(uploads) do |upload, result|
         scanned_upload = ScannedUpload.find_or_initialize_by(upload: upload)
-        scanned_upload.mark_as_scanned_with(current_database_version)
 
-        if result[:found]
-          scanned_upload.move_to_quarantine!(result[:message])
+        if result[:error]
+          scanned_upload.queue_for_retry!
         else
-          scanned_upload.save!
+          scanned_upload.mark_as_scanned_with(current_database_version)
+          handle_scan_result(scanned_upload, result)
         end
+      end
+    end
+
+    private
+
+    def handle_scan_result(scanned_upload, result)
+      if result[:found]
+        scanned_upload.move_to_quarantine!(result[:message])
+      else
+        scanned_upload.save!
       end
     end
   end

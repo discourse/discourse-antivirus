@@ -38,6 +38,22 @@ describe DiscourseAntivirus::BackgroundScan do
 
       expect(scanned_upload.quarantined).to eq(true)
     end
+
+    it 'will try again in 24 hours if the file download fails' do
+      socket = FakeTCPSocket.negative
+      store = Discourse.store
+      store.stubs(:external?).returns(true)
+      store.expects(:download).with(upload).raises(OpenURI::HTTPError.new('forbidden', nil))
+
+      antivirus = DiscourseAntivirus::ClamAV.new(store, build_fake_pool(socket: socket))
+      scanner = described_class.new(antivirus)
+
+      scanner.scan([upload])
+      scanned_upload = ScannedUpload.find_by(upload: upload)
+
+      expect(scanned_upload.scans).to eq(0)
+      expect(scanned_upload.next_scan_at).to be_present
+    end
   end
 
   describe '#scan_batch' do

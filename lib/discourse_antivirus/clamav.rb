@@ -47,15 +47,14 @@ module DiscourseAntivirus
           begin
             file = get_uploaded_file(upload)
             scan_response = stream_file(socket, file)
-
-            parse_response(scan_response, index + 1).tap do |result|
-              result[:upload] = upload
-              yield(upload, result) if block_given?
-            end
-
+            result = parse_response(scan_response, index + 1)
           rescue OpenURI::HTTPError
-            next
+            result = { error: true, found: '' }
           end
+
+          result[:upload] = upload
+          yield(upload, result) if block_given?
+          result
         end
       end
     end
@@ -86,7 +85,8 @@ module DiscourseAntivirus
     def parse_response(scan_response, index = 1)
       {
         message: scan_response.gsub("#{index}: stream:", ''),
-        found: scan_response.include?('FOUND')
+        found: scan_response.include?('FOUND'),
+        error: false
       }
     end
 

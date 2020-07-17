@@ -15,6 +15,11 @@ class ScannedUpload < ActiveRecord::Base
     end
   end
 
+  def queue_for_retry!
+    self.next_scan_at = 1.day.from_now
+    save!
+  end
+
   def move_to_quarantine!(scan_message)
     return if self.quarantined
 
