@@ -42,6 +42,7 @@ module DiscourseAntivirus
           )',
           current_database_version
         )
+        .order('uploads.created_at DESC')
         .limit(batch_size)
         .find_in_batches { |uploads| scan(uploads) }
     end
