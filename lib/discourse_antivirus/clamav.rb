@@ -53,8 +53,8 @@ module DiscourseAntivirus
               yield(upload, result) if block_given?
             end
 
-          rescue OpenURI::HTTPError => error
-            next if error.io.status == 403 # Access denied, skip.
+          rescue OpenURI::HTTPError
+            next
           end
         end
       end
