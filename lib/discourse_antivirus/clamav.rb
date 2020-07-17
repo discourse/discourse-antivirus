@@ -44,12 +44,17 @@ module DiscourseAntivirus
 
       with_session do |socket|
         uploads.each_with_index.map do |upload, index|
-          file = get_uploaded_file(upload)
-          scan_response = stream_file(socket, file)
+          begin
+            file = get_uploaded_file(upload)
+            scan_response = stream_file(socket, file)
 
-          parse_response(scan_response, index + 1).tap do |result|
-            result[:upload] = upload
-            yield(upload, result) if block_given?
+            parse_response(scan_response, index + 1).tap do |result|
+              result[:upload] = upload
+              yield(upload, result) if block_given?
+            end
+
+          rescue OpenURI::HTTPError => error
+            next if error.io.status == 403 # Access denied, skip.
           end
         end
       end
