@@ -115,7 +115,7 @@ module DiscourseAntivirus
 
     def get_uploaded_file(upload)
       if store.external?
-        store.download(upload, max_file_size_kb: upload.filesize)
+        store.download(upload, max_file_size_kb: upload.filesize.kilobytes)
       else
         File.open(store.path_for(upload))
       end
