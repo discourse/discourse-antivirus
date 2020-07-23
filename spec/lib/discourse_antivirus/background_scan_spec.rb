@@ -27,6 +27,7 @@ describe DiscourseAntivirus::BackgroundScan do
       expect(scanned_upload.quarantined).to eq(false)
       expect(scanned_upload.virus_database_version_used).to eq(scanner.current_database_version)
       expect(scanned_upload.next_scan_at).to be_nil
+      expect(scanned_upload.scan_result).to be_present
     end
 
     it 'updates an existing ScannedUpload and moves it to quarantine' do
@@ -53,6 +54,7 @@ describe DiscourseAntivirus::BackgroundScan do
 
       expect(scanned_upload.scans).to eq(0)
       expect(scanned_upload.next_scan_at).to be_present
+      expect(scanned_upload.last_scan_failed).to eq(true)
     end
   end
 

@@ -42,8 +42,7 @@ module DiscourseAntivirus
           )',
           current_database_version
         )
-        .limit(batch_size)
-        .find_in_batches { |uploads| scan(uploads) }
+        .find_in_batches(batch_size: batch_size) { |uploads| scan(uploads) }
     end
 
     def scan(uploads)
@@ -52,22 +51,7 @@ module DiscourseAntivirus
       @antivirus.scan_multiple_uploads(uploads) do |upload, result|
         scanned_upload = ScannedUpload.find_or_initialize_by(upload: upload)
 
-        if result[:error]
-          scanned_upload.queue_for_retry!
-        else
-          scanned_upload.mark_as_scanned_with(current_database_version)
-          handle_scan_result(scanned_upload, result)
-        end
-      end
-    end
-
-    private
-
-    def handle_scan_result(scanned_upload, result)
-      if result[:found]
-        scanned_upload.move_to_quarantine!(result[:message])
-      else
-        scanned_upload.save!
+        scanned_upload.update_using!(result, current_database_version)
       end
     end
   end

@@ -3,9 +3,21 @@
 class ScannedUpload < ActiveRecord::Base
   belongs_to :upload
 
-  def mark_as_scanned_with(database_version)
+  def update_using!(result, database_version)
+    if result[:error]
+      self.next_scan_at = 1.day.from_now
+      self.last_scan_failed = true
+      save!
+    else
+      mark_as_scanned_with(result[:message], database_version)
+      handle_scan_result(result)
+    end
+  end
+
+  def mark_as_scanned_with(message, database_version)
     self.scans += 1
     self.virus_database_version_used = database_version
+    self.scan_result = message
 
     upload_created_at = upload.created_at || Date.today
     week_number = upload_created_at.to_date.step(Date.today, 7).count
@@ -15,11 +27,6 @@ class ScannedUpload < ActiveRecord::Base
     else
       self.next_scan_at = nil
     end
-  end
-
-  def queue_for_retry!
-    self.next_scan_at = 1.day.from_now
-    save!
   end
 
   def move_to_quarantine!(scan_message)
@@ -63,5 +70,11 @@ class ScannedUpload < ActiveRecord::Base
     upload.posts.each do |post|
       post.rebake!(invalidate_oneboxes: true, invalidate_broken_images: true)
     end
+  end
+
+  private
+
+  def handle_scan_result(result)
+    result[:found] ? move_to_quarantine!(result[:message]) : save!
   end
 end

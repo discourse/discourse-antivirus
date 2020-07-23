@@ -23,7 +23,9 @@
     }
 
     .disable-links-to-flagged-upload {
-      pointer-events: none;
+      a {
+        pointer-events: none;
+      }
     }
   }
 }

@@ -7,7 +7,18 @@ describe ScannedUpload do
   let(:upload) { Fabricate(:upload, posts: [post]) }
 
   let(:scanned_upload) { described_class.new(upload: upload) }
-  let(:scan_message) { "1: stream: Win.Test.EICAR_HDB-1 FOUND\0" }
+  let(:database_version) { 25852 }
+  let(:scan_message) { "1: stream: Win.Test.EICAR_HDB-1 FOUND" }
+
+  describe '#update_using!' do
+    it 'sets the scan_message if there was no error' do
+      result = { error: false, found: true, message: scan_message }
+
+      scanned_upload.update_using!(result, database_version)
+
+      expect(scanned_upload.scan_result).to eq(scan_message)
+    end
+  end
 
   describe '#move_to_quarantine!' do
     it 'removes the upload link and locks the post' do
@@ -36,13 +47,11 @@ describe ScannedUpload do
   end
 
   describe '#mark_as_scanned_with' do
-    let(:database_version) { 25852 }
-
     it 'sets attributes' do
       scans = scanned_upload.scans
       upload.created_at = 1.day.ago
 
-      scanned_upload.mark_as_scanned_with(database_version)
+      scanned_upload.mark_as_scanned_with(scan_message, database_version)
 
       expect(scanned_upload.quarantined).to eq(false)
       expect(scanned_upload.virus_database_version_used).to eq(database_version)
@@ -54,7 +63,7 @@ describe ScannedUpload do
       upload.created_at = 1.day.ago
       scanned_upload.next_scan_at = 1.day.ago
 
-      scanned_upload.mark_as_scanned_with(database_version)
+      scanned_upload.mark_as_scanned_with(scan_message, database_version)
 
       expect(scanned_upload.next_scan_at).to be_nil
     end
@@ -63,7 +72,7 @@ describe ScannedUpload do
       upload.created_at = 1.week.ago
       scanned_upload.next_scan_at = nil
 
-      scanned_upload.mark_as_scanned_with(database_version)
+      scanned_upload.mark_as_scanned_with(scan_message, database_version)
 
       expect(scanned_upload.next_scan_at).to eq_time(1.week.from_now)
     end
@@ -72,7 +81,7 @@ describe ScannedUpload do
       upload.created_at = 2.weeks.ago
       scanned_upload.next_scan_at = 1.day.ago
 
-      scanned_upload.mark_as_scanned_with(database_version)
+      scanned_upload.mark_as_scanned_with(scan_message, database_version)
 
       expect(scanned_upload.next_scan_at).to eq_time(2.weeks.from_now)
     end
