@@ -5,7 +5,7 @@ require_relative '../../support/fake_tcp_socket'
 
 describe DiscourseAntivirus::ClamAV do
   fab!(:upload) { Fabricate(:image_upload) }
-  let(:file) { File.open(File.open(Discourse.store.path_for(upload))) }
+  let(:file) { File.open(Discourse.store.path_for(upload)) }
 
   before { file.rewind }
 
@@ -29,6 +29,18 @@ describe DiscourseAntivirus::ClamAV do
       scan_result = antivirus.scan_upload(upload)
 
       expect(scan_result[:found]).to eq(true)
+      assert_file_was_sent_through(fake_socket, file)
+    end
+  end
+
+  describe '#scan_multiple_uploads' do
+    it 'uses a new connection for each upload' do
+      fake_socket = FakeTCPSocket.negative
+      pool = build_fake_pool(socket: fake_socket)
+      antivirus = build_antivirus(pool)
+
+      scan_result = antivirus.scan_multiple_uploads([upload, upload])
+
       assert_file_was_sent_through(fake_socket, file)
     end
   end
@@ -85,7 +97,8 @@ describe DiscourseAntivirus::ClamAV do
       "nEND\0"
     ]
 
-    expect(fake_socket.received).to contain_exactly(*expected)
+    expect(fake_socket.received_before_close).to contain_exactly(*expected)
+    expect(fake_socket.received).to be_empty
   end
 
   def assert_file_was_sent_through(fake_socket, file)
@@ -105,7 +118,8 @@ describe DiscourseAntivirus::ClamAV do
 
     expected << "nEND\0"
 
-    expect(fake_socket.received).to contain_exactly(*expected)
+    expect(fake_socket.received_before_close).to contain_exactly(*expected)
+    expect(fake_socket.received).to be_empty
   end
 
   def build_fake_pool(socket:)

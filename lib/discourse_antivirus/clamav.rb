@@ -42,20 +42,20 @@ module DiscourseAntivirus
     def scan_multiple_uploads(uploads)
       return [] if uploads.blank?
 
-      with_session do |socket|
-        uploads.each_with_index.map do |upload, index|
-          begin
-            file = get_uploaded_file(upload)
+      uploads.map do |upload|
+        begin
+          file = get_uploaded_file(upload)
+          result = with_session do |socket|
             scan_response = stream_file(socket, file)
-            result = parse_response(scan_response, index + 1)
-          rescue OpenURI::HTTPError
-            result = { error: true, found: '' }
+            parse_response(scan_response)
           end
-
-          result[:upload] = upload
-          yield(upload, result) if block_given?
-          result
+        rescue OpenURI::HTTPError
+          result = { error: true, found: '' }
         end
+
+        result[:upload] = upload
+        yield(upload, result) if block_given?
+        result
       end
     end
 
@@ -82,9 +82,9 @@ module DiscourseAntivirus
       yield(socket).tap { |_| close_socket(socket) }
     end
 
-    def parse_response(scan_response, index = 1)
+    def parse_response(scan_response)
       {
-        message: scan_response.gsub("#{index}: stream:", ''),
+        message: scan_response.gsub("1: stream:", ''),
         found: scan_response.include?('FOUND'),
         error: false
       }

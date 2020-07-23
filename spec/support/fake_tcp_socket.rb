@@ -10,11 +10,12 @@ class FakeTCPSocket
 
   def initialize(canned_response)
     @canned_response = canned_response
+    @received_before_close = []
     @received = []
     @next_to_read = 0
   end
 
-  attr_reader :received
+  attr_reader :received, :received_before_close
   attr_accessor :canned_response
 
   def send(text, _)
@@ -25,5 +26,9 @@ class FakeTCPSocket
     canned_response[@next_to_read].tap { |_| @next_to_read += 1 }
   end
 
-  def close; end
+  def close
+    @next_to_read = 0
+    @received_before_close = @received
+    @received = []
+  end
 end
