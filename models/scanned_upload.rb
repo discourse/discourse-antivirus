@@ -7,11 +7,15 @@ class ScannedUpload < ActiveRecord::Base
     if result[:error]
       self.next_scan_at = 1.day.from_now
       self.last_scan_failed = true
-      save!
     else
       mark_as_scanned_with(result[:message], database_version)
-      handle_scan_result(result)
+      self.quarantined = result[:found]
+      if self.quarantined && SiteSetting.flag_malicious_uploads?
+        flag_upload(result[:message])
+      end
     end
+
+    save!
   end
 
   def mark_as_scanned_with(message, database_version)
@@ -29,16 +33,14 @@ class ScannedUpload < ActiveRecord::Base
     end
   end
 
-  def move_to_quarantine!(scan_message)
-    return if self.quarantined
+  def flag_upload(scan_message = self.scan_result)
+    return if !self.quarantined || ReviewableUpload.exists?(target: upload)
 
     system_user = Discourse.system_user
     upload_link = "#{Upload.base62_sha1(upload.sha1)}#{upload.extension.present? ? ".#{upload.extension}" : ""}"
     original_post_raw_example = upload.posts.last&.raw
 
     self.class.transaction do
-      self.quarantined = true
-
       uploaded_to = upload.posts.map do |post|
         quarantined_raw = post.raw.gsub(/!?\[(.*?)\]\(upload:\/\/#{upload_link}\)/, I18n.t("scan.quarantined"))
         post.update!(raw: quarantined_raw, locked_by_id: system_user.id)
@@ -62,13 +64,11 @@ class ScannedUpload < ActiveRecord::Base
         created_at: reviewable.created_at, reason: 'malicious_file'
       )
 
-      save!
-    end
+      SystemMessage.new(upload.user).create('malicious_file', filename: upload.original_filename)
 
-    SystemMessage.new(upload.user).create('malicious_file', filename: upload.original_filename)
-
-    upload.posts.each do |post|
-      post.rebake!(invalidate_oneboxes: true, invalidate_broken_images: true)
+      upload.posts.each do |post|
+        post.rebake!(invalidate_oneboxes: true, invalidate_broken_images: true)
+      end
     end
   end
 

@@ -11,21 +11,37 @@ describe ScannedUpload do
   let(:scan_message) { "1: stream: Win.Test.EICAR_HDB-1 FOUND" }
 
   describe '#update_using!' do
+    let(:result) { { error: false, found: true, message: scan_message } }
+
     it 'sets the scan_message if there was no error' do
-      result = { error: false, found: true, message: scan_message }
+      scanned_upload.update_using!(result, database_version)
+
+      reviewable_upload = ReviewableUpload.find_by(target: upload)
+
+      expect(reviewable_upload).to be_present
+      expect(scanned_upload.scan_result).to eq(scan_message)
+      expect(scanned_upload.quarantined).to eq(true)
+    end
+
+    it 'does not flag the upload if the flag_malicious_uploads setting is disabled' do
+      SiteSetting.flag_malicious_uploads = false
 
       scanned_upload.update_using!(result, database_version)
 
-      expect(scanned_upload.scan_result).to eq(scan_message)
+      reviewable_upload = ReviewableUpload.find_by(target: upload)
+
+      expect(reviewable_upload).to be_nil
     end
   end
 
-  describe '#move_to_quarantine!' do
+  describe '#flag_upload' do
+    before { scanned_upload.quarantined = true }
+
     it 'removes the upload link and locks the post' do
       upload_link = "#{Upload.base62_sha1(upload.sha1)}#{upload.extension.present? ? ".#{upload.extension}" : ""}"
       post.raw = "[attachment.jpg|attachment](upload://#{upload_link})"
 
-      scanned_upload.move_to_quarantine!(scan_message)
+      scanned_upload.flag_upload(scan_message)
 
       qurantined_post = post.reload
 
@@ -34,7 +50,7 @@ describe ScannedUpload do
     end
 
     it 'creates a reviewable for the quarantined upload' do
-      scanned_upload.move_to_quarantine!(scan_message)
+      scanned_upload.flag_upload(scan_message)
 
       reviewable = ReviewableUpload.find_by(target: upload)
 

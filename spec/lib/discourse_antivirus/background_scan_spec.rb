@@ -163,8 +163,8 @@ describe DiscourseAntivirus::BackgroundScan do
     end
 
     it 'returns 1 found files if a upload is moved into quarantine' do
-      scanned_upload = create_scanned_upload
-      scanned_upload.move_to_quarantine!("scan_message")
+      scanned_upload = create_scanned_upload(quarantined: true)
+      scanned_upload.flag_upload("scan_message")
 
       expect(described_class.stats[:found]).to eq(1)
     end
