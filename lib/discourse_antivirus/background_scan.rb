@@ -42,7 +42,8 @@ module DiscourseAntivirus
           )',
           current_database_version
         )
-        .find_in_batches(batch_size: batch_size) { |uploads| scan(uploads) }
+        .limit(batch_size)
+        .find_in_batches { |uploads| scan(uploads) }
     end
 
     def scan(uploads)
