@@ -43,9 +43,8 @@ describe DiscourseAntivirus::BackgroundScan do
     it 'will try again in 24 hours if the file download fails' do
       socket = FakeTCPSocket.negative
       store = Discourse.store
-      size_in_kb = upload.filesize / 1000
       store.stubs(:external?).returns(true)
-      store.expects(:download).with(upload, max_file_size_kb: size_in_kb).raises(OpenURI::HTTPError.new('forbidden', nil))
+      store.expects(:download).with(upload, max_file_size_kb: upload.filesize).raises(OpenURI::HTTPError.new('forbidden', nil))
 
       antivirus = DiscourseAntivirus::ClamAV.new(store, build_fake_pool(socket: socket))
       scanner = described_class.new(antivirus)

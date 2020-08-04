@@ -119,8 +119,7 @@ module DiscourseAntivirus
 
     def get_uploaded_file(upload)
       if store.external?
-        size_in_kb = upload.filesize / 1000
-        store.download(upload, max_file_size_kb: size_in_kb)
+        store.download(upload, max_file_size_kb: upload.filesize)
       else
         File.open(store.path_for(upload))
       end
