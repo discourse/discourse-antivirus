@@ -53,6 +53,7 @@ describe DiscourseAntivirus::BackgroundScan do
       scanned_upload = ScannedUpload.find_by(upload: upload)
 
       expect(scanned_upload.scans).to eq(0)
+      expect(scanned_upload.scan_result).to eq(DiscourseAntivirus::ClamAV::DOWNLOAD_FAILED)
       expect(scanned_upload.next_scan_at).to be_present
       expect(scanned_upload.last_scan_failed).to eq(true)
     end

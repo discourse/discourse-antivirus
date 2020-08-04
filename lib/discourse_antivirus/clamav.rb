@@ -5,6 +5,8 @@ module DiscourseAntivirus
     VIRUS_FOUND = Class.new(StandardError)
     PLUGIN_NAME = 'discourse-antivirus'
     STORE_KEY = 'clamav-versions'
+    DOWNLOAD_FAILED = 'Download failed'
+    TRANSMISSION_FAILED = 'Failed to send data to ClamAV'
 
     def self.instance
       new(Discourse.store, DiscourseAntivirus::ClamAVServicesPool.new)
@@ -43,14 +45,16 @@ module DiscourseAntivirus
       return [] if uploads.blank?
 
       uploads.map do |upload|
-        begin
+        result = begin
           file = get_uploaded_file(upload)
-          result = with_session do |socket|
+          with_session do |socket|
             scan_response = stream_file(socket, file)
             parse_response(scan_response)
           end
         rescue OpenURI::HTTPError
-          result = { error: true, found: '' }
+          { error: true, found: '', message: DOWNLOAD_FAILED }
+        rescue Errno::EPIPE
+          { error: true, found: '', message: TRANSMISSION_FAILED }
         end
 
         result[:upload] = upload

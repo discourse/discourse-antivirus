@@ -7,6 +7,7 @@ class ScannedUpload < ActiveRecord::Base
     if result[:error]
       self.next_scan_at = 1.day.from_now
       self.last_scan_failed = true
+      self.scan_result = result[:message]
     else
       mark_as_scanned_with(result[:message], database_version)
       self.quarantined = result[:found]
