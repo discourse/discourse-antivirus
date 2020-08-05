@@ -6,7 +6,6 @@ module DiscourseAntivirus
     PLUGIN_NAME = 'discourse-antivirus'
     STORE_KEY = 'clamav-versions'
     DOWNLOAD_FAILED = 'Download failed'
-    TRANSMISSION_FAILED = 'Failed to send data to ClamAV'
 
     def self.instance
       new(Discourse.store, DiscourseAntivirus::ClamAVServicesPool.new)
@@ -53,8 +52,9 @@ module DiscourseAntivirus
           end
         rescue OpenURI::HTTPError
           { error: true, found: '', message: DOWNLOAD_FAILED }
-        rescue Errno::EPIPE
-          { error: true, found: '', message: TRANSMISSION_FAILED }
+        rescue StandardError => e
+          Rails.logger.error("Could not scan upload #{upload.id}. Error: #{e.message}")
+          { error: true, found: '', message: e.message }
         end
 
         result[:upload] = upload
