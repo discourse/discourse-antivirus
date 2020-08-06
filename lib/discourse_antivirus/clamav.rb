@@ -40,34 +40,15 @@ module DiscourseAntivirus
       antivirus_versions
     end
 
-    def scan_multiple_uploads(uploads)
-      return [] if uploads.blank?
-
-      uploads.map do |upload|
-        result = begin
-          file = get_uploaded_file(upload)
-          with_session do |socket|
-            scan_response = stream_file(socket, file)
-            parse_response(scan_response)
-          end
-        rescue OpenURI::HTTPError
-          { error: true, found: '', message: DOWNLOAD_FAILED }
-        rescue StandardError => e
-          Rails.logger.error("Could not scan upload #{upload.id}. Error: #{e.message}")
-          { error: true, found: '', message: e.message }
-        end
-
-        result[:upload] = upload
-        yield(upload, result) if block_given?
-        result
-      end
-    end
-
     def scan_upload(upload)
-      file = get_uploaded_file(upload)
-
-      scan_file(file).tap do |response|
-        response[:upload] = upload
+      begin
+        file = get_uploaded_file(upload)
+        scan_file(file)
+      rescue OpenURI::HTTPError
+        { error: true, found: '', message: DOWNLOAD_FAILED }
+      rescue StandardError => e
+        Rails.logger.error("Could not scan upload #{upload.id}. Error: #{e.message}")
+        { error: true, found: '', message: e.message }
       end
     end
 

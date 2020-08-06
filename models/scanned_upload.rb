@@ -3,6 +3,10 @@
 class ScannedUpload < ActiveRecord::Base
   belongs_to :upload
 
+  def self.create_new!(upload)
+    create!(upload: upload, next_scan_at: 10.minutes.from_now)
+  end
+
   def update_using!(result, database_version)
     if result[:error]
       self.next_scan_at = 1.day.from_now

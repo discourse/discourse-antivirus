@@ -18,12 +18,11 @@ describe DiscourseAntivirus::BackgroundScan do
   describe '#scan' do
     it 'creates a ScannedUpload' do
       scanner = build_scanner(quarantine_files: false)
+      scanned_upload = ScannedUpload.create_new!(upload)
 
-      scanner.scan([upload])
-      scanned_upload = ScannedUpload.find_by(upload: upload)
+      scanner.scan([scanned_upload])
+      scanned_upload.reload
 
-      expect(scanned_upload).not_to be_nil
-      expect(scanned_upload.upload_id).to eq(upload.id)
       expect(scanned_upload.quarantined).to eq(false)
       expect(scanned_upload.virus_database_version_used).to eq(scanner.current_database_version)
       expect(scanned_upload.next_scan_at).to be_nil
@@ -32,9 +31,9 @@ describe DiscourseAntivirus::BackgroundScan do
 
     it 'updates an existing ScannedUpload and moves it to quarantine' do
       scanner = build_scanner(quarantine_files: true)
-      scanned_upload = ScannedUpload.create!(upload: upload)
+      scanned_upload = ScannedUpload.create_new!(upload)
 
-      scanner.scan([upload])
+      scanner.scan([scanned_upload])
       scanned_upload.reload
 
       expect(scanned_upload.quarantined).to eq(true)
@@ -48,14 +47,35 @@ describe DiscourseAntivirus::BackgroundScan do
 
       antivirus = DiscourseAntivirus::ClamAV.new(store, build_fake_pool(socket: socket))
       scanner = described_class.new(antivirus)
+      scanned_upload = ScannedUpload.create_new!(upload)
 
-      scanner.scan([upload])
-      scanned_upload = ScannedUpload.find_by(upload: upload)
+      scanner.scan([scanned_upload])
+      scanned_upload.reload
 
       expect(scanned_upload.scans).to eq(0)
       expect(scanned_upload.scan_result).to eq(DiscourseAntivirus::ClamAV::DOWNLOAD_FAILED)
       expect(scanned_upload.next_scan_at).to be_present
       expect(scanned_upload.last_scan_failed).to eq(true)
+    end
+  end
+
+  describe '#queue_batch' do
+    it 'creates a new ScannedUpload object' do
+      build_scanner(quarantine_files: false).queue_batch
+
+      scanned_upload = ScannedUpload.find_by(upload: upload)
+
+      expect(scanned_upload.scans).to be_zero
+      expect(scanned_upload.next_scan_at).to be_present
+    end
+
+    it 'doesnt create a new object if there already an existing scanned upload' do
+      ScannedUpload.create!(upload: upload, scans: 10)
+
+      build_scanner(quarantine_files: false).queue_batch
+      scanned_upload = ScannedUpload.find_by(upload: upload)
+
+      expect(scanned_upload.scans).not_to be_zero
     end
   end
 
@@ -68,13 +88,6 @@ describe DiscourseAntivirus::BackgroundScan do
       build_scanner(quarantine_files: false).scan_batch
 
       expect(scanned_upload.reload.scans).to eq(scans)
-    end
-
-    it 'scans uploads even if there is no scanned upload object' do
-      build_scanner(quarantine_files: false).scan_batch
-      scanned_upload = ScannedUpload.find_by(upload: upload)
-
-      expect(scanned_upload).to be_present
     end
 
     describe 'uploads are scanned on every definition update during the first week' do
@@ -177,7 +190,8 @@ describe DiscourseAntivirus::BackgroundScan do
     end
 
     def create_scanned_upload(updated_at: 6.hours.ago, quarantined: false, scans: 0)
-      ScannedUpload.create!(upload: upload, updated_at: updated_at, quarantined: quarantined, scans: scans)
+      new_upload = Fabricate(:image_upload)
+      ScannedUpload.create!(upload: new_upload, updated_at: updated_at, quarantined: quarantined, scans: scans)
     end
   end
 

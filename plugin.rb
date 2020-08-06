@@ -29,6 +29,7 @@ after_initialize do
   require_dependency File.expand_path('../models/reviewable_upload.rb', __FILE__)
   require_dependency File.expand_path('../serializers/reviewable_upload_serializer.rb', __FILE__)
   require_dependency File.expand_path('../jobs/scheduled/scan_batch.rb', __FILE__)
+  require_dependency File.expand_path('../jobs/scheduled/create_scanned_uploads.rb', __FILE__)
   require_dependency File.expand_path('../jobs/scheduled/fetch_antivirus_version.rb', __FILE__)
   require_dependency File.expand_path('../jobs/scheduled/flag_quarantined_uploads.rb', __FILE__)
 

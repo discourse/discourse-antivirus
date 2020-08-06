@@ -33,18 +33,6 @@ describe DiscourseAntivirus::ClamAV do
     end
   end
 
-  describe '#scan_multiple_uploads' do
-    it 'uses a new connection for each upload' do
-      fake_socket = FakeTCPSocket.negative
-      pool = build_fake_pool(socket: fake_socket)
-      antivirus = build_antivirus(pool)
-
-      scan_result = antivirus.scan_multiple_uploads([upload, upload])
-
-      assert_file_was_sent_through(fake_socket, file)
-    end
-  end
-
   describe '#version' do
     let(:antivirus_version) { 'ClamAV 0.102.3' }
     let(:database_version) { '25853' }
