@@ -26,6 +26,7 @@ class ScannedUpload < ActiveRecord::Base
   def mark_as_scanned_with(message, database_version)
     self.scans += 1
     self.virus_database_version_used = database_version
+    self.last_scan_failed = false
     self.scan_result = message
 
     upload_created_at = upload.created_at || Date.today
