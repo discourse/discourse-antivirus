@@ -43,7 +43,8 @@ describe DiscourseAntivirus::BackgroundScan do
       socket = FakeTCPSocket.negative
       store = Discourse.store
       store.stubs(:external?).returns(true)
-      store.expects(:download).with(upload, max_file_size_kb: upload.filesize).raises(OpenURI::HTTPError.new('forbidden', nil))
+      filesize = upload.filesize + 1.megabyte
+      store.expects(:download).with(upload, max_file_size_kb: filesize).raises(OpenURI::HTTPError.new('forbidden', nil))
 
       antivirus = DiscourseAntivirus::ClamAV.new(store, build_fake_pool(socket: socket))
       scanner = described_class.new(antivirus)
