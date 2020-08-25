@@ -10,6 +10,8 @@ describe ScannedUpload do
   let(:database_version) { 25852 }
   let(:scan_message) { "1: stream: Win.Test.EICAR_HDB-1 FOUND" }
 
+  before { SiteSetting.flag_malicious_uploads = true }
+
   describe '#update_using!' do
     let(:result) { { error: false, found: true, message: scan_message } }
 

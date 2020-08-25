@@ -6,4 +6,4 @@ plugins:
   antivirus_srv_record:
     default: ''
   flag_malicious_uploads:
-    default: true
+    default: false

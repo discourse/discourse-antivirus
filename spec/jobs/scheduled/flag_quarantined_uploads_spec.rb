@@ -8,6 +8,7 @@ describe Jobs::FlagQuarantinedUploads do
     let(:upload) { Fabricate(:upload) }
 
     before do
+      SiteSetting.flag_malicious_uploads = true
       @scanned_upload = ScannedUpload.create!(upload: upload, quarantined: true, scan_result: scan_message)
     end
 
