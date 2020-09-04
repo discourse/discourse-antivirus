@@ -51,7 +51,8 @@ after_initialize do
   end
 
   on(:before_upload_creation) do |file, is_image, for_export|
-    should_scan_file = !for_export && (!is_image || SiteSetting.antivirus_live_scan_images)
+    is_for_export = for_export == 'true'
+    should_scan_file = !is_for_export && (!is_image || SiteSetting.antivirus_live_scan_images)
     should_scan_file &&= DiscourseAntivirus::ClamAVServicesPool.correctly_configured?
 
     if should_scan_file && DiscourseAntivirus::ClamAV.instance.scan_file(file)[:found]

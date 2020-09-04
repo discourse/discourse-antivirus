@@ -18,13 +18,13 @@ describe 'plugin live scanning' do
       DiscourseAntivirus::ClamAV.expects(:instance).returns(build_antivirus(FakeTCPSocket.positive))
 
       expect {
-        UploadCreator.new(file, filename, for_export: false).create_for(user.id)
+        UploadCreator.new(file, filename).create_for(user.id)
       }.to raise_error DiscourseAntivirus::ClamAV::VIRUS_FOUND
     end
 
     it 'skips the file if it was tagged for export' do
       expect {
-        UploadCreator.new(file, filename, for_export: true).create_for(user.id)
+        UploadCreator.new(file, filename, for_export: 'true').create_for(user.id)
       }.not_to raise_error
     end
   end
@@ -35,7 +35,7 @@ describe 'plugin live scanning' do
 
     it 'skips images by default' do
       expect {
-        UploadCreator.new(file, filename, for_export: false).create_for(user.id)
+        UploadCreator.new(file, filename).create_for(user.id)
       }.not_to raise_error
     end
 
@@ -45,7 +45,7 @@ describe 'plugin live scanning' do
       DiscourseAntivirus::ClamAV.expects(:instance).returns(build_antivirus(FakeTCPSocket.positive))
 
       expect {
-        UploadCreator.new(file, filename, for_export: false).create_for(user.id)
+        UploadCreator.new(file, filename).create_for(user.id)
       }.to raise_error DiscourseAntivirus::ClamAV::VIRUS_FOUND
     end
   end
