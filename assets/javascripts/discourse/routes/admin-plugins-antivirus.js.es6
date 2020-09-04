@@ -11,7 +11,7 @@ export default Route.extend({
   setupController(controller, model) {
     controller.setProperties({
       model: model,
-      background_scan_stats: model.background_scan_stats
+      background_scan_stats: model.background_scan_stats,
     });
-  }
+  },
 });
