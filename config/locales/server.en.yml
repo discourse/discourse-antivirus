@@ -5,6 +5,9 @@ en:
     antivirus_srv_record: SRV record used to discover ClamAV services
     flag_malicious_uploads: Send quarantined uploads to the review queue. If disabled, it'll only store AV scan result.
 
+    errors:
+      antivirus_srv_record_required: "Set the antivirus_srv_record first."
+
   scan:
     virus_found: The antivirus flagged this file as potentially malicious, so it can't be uploaded.
     quarantined: "[This file was removed because it was flagged as potentially malicious]"

@@ -1,6 +1,7 @@
 plugins:
   discourse_antivirus_enabled:
     default: false
+    validator: EnableDiscourseAntivirusValidator
   antivirus_live_scan_images:
     default: false
   antivirus_srv_record:

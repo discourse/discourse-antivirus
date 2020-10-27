@@ -17,6 +17,7 @@ register_asset 'stylesheets/hide-malicious-file-flag.scss'
 PLUGIN_NAME ||= 'DiscourseAntivirus'
 
 load File.expand_path('lib/discourse_antivirus/engine.rb', __dir__)
+load File.expand_path('lib/validators/enable_discourse_antivirus_validator.rb', __dir__)
 
 add_admin_route 'antivirus.title', 'antivirus'
 
@@ -50,10 +51,15 @@ after_initialize do
     end
   end
 
+  on(:site_setting_changed) do |name, _, new_val|
+    if name == :discourse_antivirus_enabled && new_val
+      Jobs.enqueue(:fetch_antivirus_version)
+    end
+  end
+
   on(:before_upload_creation) do |file, is_image, for_export|
     is_for_export = for_export == 'true'
     should_scan_file = !is_for_export && (!is_image || SiteSetting.antivirus_live_scan_images)
-    should_scan_file &&= DiscourseAntivirus::ClamAVServicesPool.correctly_configured?
 
     if should_scan_file && DiscourseAntivirus::ClamAV.instance.scan_file(file)[:found]
       raise DiscourseAntivirus::ClamAV::VIRUS_FOUND, I18n.t('scan.virus_found')

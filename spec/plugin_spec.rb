@@ -55,3 +55,15 @@ describe 'plugin live scanning' do
     DiscourseAntivirus::ClamAV.new(Discourse.store, pool)
   end
 end
+
+describe 'Updating the ClamAV version after enabling the plugin' do
+  it 'enqueues a job to fetch the latest version' do
+    SiteSetting.antivirus_srv_record = 'srv.record'
+
+    expect { SiteSetting.discourse_antivirus_enabled = true }.to change(Jobs::FetchAntivirusVersion.jobs, :size).by(1)
+  end
+
+  it 'does nothing' do
+    expect { SiteSetting.discourse_antivirus_enabled = false }.to change(Jobs::FetchAntivirusVersion.jobs, :size).by(0)
+  end
+end
