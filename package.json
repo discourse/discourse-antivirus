@@ -1,7 +1,7 @@
 {
-  "name": "discourse-yearly-review",
+  "name": "discourse-antivirus",
   "version": "1.0.0",
-  "repository": "git@github.com:discourse/discourse-yearly-review.git",
+  "repository": "git@github.com:discourse/discourse-antivirus.git",
   "author": "Discourse",
   "license": "MIT",
   "devDependencies": {
