@@ -1,0 +1,10 @@
+{
+  "name": "discourse-antivirus",
+  "version": "0.1.0",
+  "repository": "git@github.com:discourse/discourse-antivirus.git",
+  "author": "Discourse",
+  "license": "MIT",
+  "devDependencies": {
+    "eslint-config-discourse": "^1.1.3"
+  }
+}
