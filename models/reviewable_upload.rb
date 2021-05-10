@@ -74,9 +74,8 @@ class ReviewableUpload < Reviewable
 
   def post; end
 
-  def successful_transition(to_state, update_flag_status, recalculate_score: true)
+  def successful_transition(to_state, update_flag_status)
     create_result(:success, to_state)  do |result|
-      result.recalculate_score = recalculate_score
       result.update_flag_stats = { status: update_flag_status, user_ids: [created_by_id] }
     end
   end
