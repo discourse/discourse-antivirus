@@ -11,21 +11,44 @@ describe 'plugin live scanning' do
   describe 'exporting files' do
     before { SiteSetting.authorized_extensions = 'pdf' }
 
-    let(:filename) { "small.pdf" }
-    let(:file) { file_from_fixtures(filename, "pdf") }
+    let(:filename) { 'small.pdf' }
+    let(:file) { file_from_fixtures(filename, 'pdf') }
 
-    it 'scans regular files' do
+    it 'scans regular files and adds an error if the scan result is positive' do
       DiscourseAntivirus::ClamAV.expects(:instance).returns(build_antivirus(FakeTCPSocket.positive))
 
-      expect {
-        UploadCreator.new(file, filename).create_for(user.id)
-      }.to raise_error DiscourseAntivirus::ClamAV::VIRUS_FOUND
+      scanned_upload = UploadCreator.new(file, filename).create_for(user.id)
+
+      expect(scanned_upload.errors.to_a).to contain_exactly(I18n.t('scan.virus_found'))
+    end
+
+    it "scans regular files but does nothing if the scan result is negative" do
+      DiscourseAntivirus::ClamAV.expects(:instance).returns(build_antivirus(FakeTCPSocket.negative))
+
+      scanned_upload = UploadCreator.new(file, filename).create_for(user.id)
+
+      expect(scanned_upload.errors.to_a).to be_empty
     end
 
     it 'skips the file if it was tagged for export' do
-      expect {
-        UploadCreator.new(file, filename, for_export: 'true').create_for(user.id)
-      }.not_to raise_error
+      SiteSetting.export_authorized_extensions = 'pdf'
+      upload = UploadCreator.new(file, filename, for_export: 'true').create_for(user.id)
+
+      expect(upload.errors).to be_empty
+    end
+
+    it 'skips the file if the skip_validations option is true' do
+      upload = UploadCreator.new(file, filename, skip_validations: true).create_for(user.id)
+
+      expect(upload.errors).to be_empty
+    end
+
+    it 'skips files if the upload is not valid' do
+      SiteSetting.max_attachment_size_kb = 0
+
+      upload = UploadCreator.new(file, filename).create_for(user.id)
+
+      expect(upload.persisted?).to eq(false)
     end
   end
 
@@ -34,9 +57,9 @@ describe 'plugin live scanning' do
     let(:file) { file_from_fixtures(filename) }
 
     it 'skips images by default' do
-      expect {
-        UploadCreator.new(file, filename).create_for(user.id)
-      }.not_to raise_error
+      upload = UploadCreator.new(file, filename).create_for(user.id)
+
+      expect(upload.errors).to be_empty
     end
 
     it 'scans the image if the live scan images setting is enabled' do
@@ -44,9 +67,9 @@ describe 'plugin live scanning' do
 
       DiscourseAntivirus::ClamAV.expects(:instance).returns(build_antivirus(FakeTCPSocket.positive))
 
-      expect {
-        UploadCreator.new(file, filename).create_for(user.id)
-      }.to raise_error DiscourseAntivirus::ClamAV::VIRUS_FOUND
+      scanned_upload = UploadCreator.new(file, filename).create_for(user.id)
+
+      expect(scanned_upload.errors.to_a).to contain_exactly(I18n.t('scan.virus_found'))
     end
   end
 

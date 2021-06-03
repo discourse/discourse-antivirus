@@ -57,12 +57,13 @@ after_initialize do
     end
   end
 
-  on(:before_upload_creation) do |file, is_image, for_export|
-    is_for_export = for_export == 'true'
-    should_scan_file = !is_for_export && (!is_image || SiteSetting.antivirus_live_scan_images)
+  on(:before_upload_creation) do |file, is_image, upload, validate|
+    should_scan_file = !upload.for_export && (!is_image || SiteSetting.antivirus_live_scan_images)
 
-    if should_scan_file && DiscourseAntivirus::ClamAV.instance.scan_file(file)[:found]
-      raise DiscourseAntivirus::ClamAV::VIRUS_FOUND, I18n.t('scan.virus_found')
+    if validate && should_scan_file && upload.valid?
+      is_positive = DiscourseAntivirus::ClamAV.instance.scan_file(file)[:found]
+
+      upload.errors.add(:base, I18n.t('scan.virus_found')) if is_positive
     end
   end
 end
