@@ -12,6 +12,10 @@ module DiscourseAntivirus
       end
     end
 
+    def accepting_connections?
+      tcp_socket.nil?
+    end
+
     def tcp_socket
       build_socket(service_instance.targets.first)
     end
@@ -23,7 +27,11 @@ module DiscourseAntivirus
     private
 
     def build_socket(target)
-      TCPSocket.new(target.hostname, target.port)
+      return if target.nil?
+      return if target.hostname.blank?
+      return if target.port.blank?
+
+      TCPSocket.new(target.hostname, target.port) rescue nil
     end
 
     def service_instance

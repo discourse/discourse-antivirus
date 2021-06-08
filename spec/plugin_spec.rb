@@ -8,14 +8,14 @@ describe 'plugin live scanning' do
 
   fab!(:user) { Fabricate(:user) }
 
-  describe 'exporting files' do
+  describe 'regular files' do
     before { SiteSetting.authorized_extensions = 'pdf' }
 
     let(:filename) { 'small.pdf' }
     let(:file) { file_from_fixtures(filename, 'pdf') }
 
     it 'scans regular files and adds an error if the scan result is positive' do
-      DiscourseAntivirus::ClamAV.expects(:instance).returns(build_antivirus(FakeTCPSocket.positive))
+      mock_services_pool(FakeTCPSocket.positive)
 
       scanned_upload = UploadCreator.new(file, filename).create_for(user.id)
 
@@ -23,7 +23,7 @@ describe 'plugin live scanning' do
     end
 
     it "scans regular files but does nothing if the scan result is negative" do
-      DiscourseAntivirus::ClamAV.expects(:instance).returns(build_antivirus(FakeTCPSocket.negative))
+      mock_services_pool(FakeTCPSocket.negative)
 
       scanned_upload = UploadCreator.new(file, filename).create_for(user.id)
 
@@ -50,6 +50,16 @@ describe 'plugin live scanning' do
 
       expect(upload.persisted?).to eq(false)
     end
+
+    context 'when we cannot establish a connection with ClamAV' do
+      it 'skips the upload' do
+        mock_services_pool(nil)
+
+        upload = UploadCreator.new(file, filename).create_for(user.id)
+
+        expect(upload.errors).to be_empty
+      end
+    end
   end
 
   describe 'images' do
@@ -64,8 +74,7 @@ describe 'plugin live scanning' do
 
     it 'scans the image if the live scan images setting is enabled' do
       SiteSetting.antivirus_live_scan_images = true
-
-      DiscourseAntivirus::ClamAV.expects(:instance).returns(build_antivirus(FakeTCPSocket.positive))
+      mock_services_pool(FakeTCPSocket.positive)
 
       scanned_upload = UploadCreator.new(file, filename).create_for(user.id)
 
@@ -73,9 +82,9 @@ describe 'plugin live scanning' do
     end
   end
 
-  def build_antivirus(socket)
-    pool = OpenStruct.new(tcp_socket: socket, all_tcp_sockets: [socket])
-    DiscourseAntivirus::ClamAV.new(Discourse.store, pool)
+  def mock_services_pool(socket)
+    pool = OpenStruct.new(tcp_socket: socket, all_tcp_sockets: [socket], accepting_connections?: !socket.nil?)
+    DiscourseAntivirus::ClamAVServicesPool.expects(:new).returns(pool)
   end
 end
 
