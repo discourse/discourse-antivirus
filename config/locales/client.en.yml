@@ -16,6 +16,7 @@ en:
       version: Version
       database_version: Database version
       database_updated_at: Last database update
+      clamav_unavailable: We cannot establish a connection with the antivirus software. File scanning will be temporarily disabled.
 
       stats:
         total_scans: Scanned Files

@@ -2,6 +2,8 @@
 
 module DiscourseAntivirus
   class ClamAVServicesPool
+    UNAVAILABLE = 'unavailable'
+
     def self.correctly_configured?
       return true if Rails.env.test?
 
@@ -13,7 +15,9 @@ module DiscourseAntivirus
     end
 
     def accepting_connections?
-      tcp_socket.nil?
+      tcp_socket.present?.tap do |available|
+        PluginStore.set(DiscourseAntivirus::ClamAV::PLUGIN_NAME, UNAVAILABLE, !available)
+      end
     end
 
     def tcp_socket

@@ -36,6 +36,17 @@ after_initialize do
 
   replace_flags(settings: PostActionType.flag_settings, score_type_names: %i[malicious_file])
 
+  add_to_serializer(:site, :clamav_unreacheable, false) do
+    !!PluginStore.get(
+      DiscourseAntivirus::ClamAV::PLUGIN_NAME,
+      DiscourseAntivirus::ClamAVServicesPool::UNAVAILABLE
+    )
+  end
+
+  add_to_serializer(:site, :include_clamav_unreacheable?, false) do
+    SiteSetting.discourse_antivirus_enabled? && scope.is_staff?
+  end
+
   on(:site_setting_changed) do |name, _, new_val|
     if name == :discourse_antivirus_enabled && new_val
       Jobs.enqueue(:fetch_antivirus_version)
@@ -47,7 +58,7 @@ after_initialize do
 
     if validate && should_scan_file && upload.valid?
       pool = DiscourseAntivirus::ClamAVServicesPool.new
-      
+
       if pool.accepting_connections?
         is_positive = DiscourseAntivirus::ClamAV.instance(sockets_pool: pool).scan_file(file)[:found]
 
