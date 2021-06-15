@@ -2,6 +2,8 @@
 
 module DiscourseAntivirus
   class ClamAVServicesPool
+    UNAVAILABLE = 'unavailable'
+
     def self.correctly_configured?
       return true if Rails.env.test?
 
@@ -9,6 +11,12 @@ module DiscourseAntivirus
         SiteSetting.antivirus_srv_record.present?
       else
         GlobalSetting.respond_to?(:clamav_hostname) && GlobalSetting.respond_to?(:clamav_port)
+      end
+    end
+
+    def accepting_connections?
+      tcp_socket.present?.tap do |available|
+        PluginStore.set(DiscourseAntivirus::ClamAV::PLUGIN_NAME, UNAVAILABLE, !available)
       end
     end
 
@@ -23,7 +31,11 @@ module DiscourseAntivirus
     private
 
     def build_socket(target)
-      TCPSocket.new(target.hostname, target.port)
+      return if target.nil?
+      return if target.hostname.blank?
+      return if target.port.blank?
+
+      TCPSocket.new(target.hostname, target.port) rescue nil
     end
 
     def service_instance

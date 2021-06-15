@@ -5,10 +5,9 @@ module DiscourseAntivirus
     requires_plugin 'discourse-antivirus'
 
     def index
-      render json: {
-        versions: DiscourseAntivirus::ClamAV.instance.versions,
-        background_scan_stats: DiscourseAntivirus::BackgroundScan.stats
-      }
+      antivirus = DiscourseAntivirus::ClamAV.instance
+
+      render json: DiscourseAntivirus::BackgroundScan.new(antivirus).stats
     end
   end
 end

@@ -7,8 +7,8 @@ module DiscourseAntivirus
     STORE_KEY = 'clamav-versions'
     DOWNLOAD_FAILED = 'Download failed'
 
-    def self.instance
-      new(Discourse.store, DiscourseAntivirus::ClamAVServicesPool.new)
+    def self.instance(sockets_pool: DiscourseAntivirus::ClamAVServicesPool.new)
+      new(Discourse.store, sockets_pool)
     end
 
     def initialize(store, clamav_services_pool)

@@ -6,7 +6,7 @@ module DiscourseAntivirus
       @antivirus = antivirus
     end
 
-    def self.stats
+    def stats
       scanned_upload_stats = DB.query_single(<<~SQL
         SELECT
           SUM(scans),
@@ -17,15 +17,14 @@ module DiscourseAntivirus
       )
 
       {
-        scans: scanned_upload_stats[0] || 0,
-        recently_scanned: scanned_upload_stats[1] || 0,
-        quarantined: scanned_upload_stats[2] || 0,
-        found: ReviewableUpload.count
+        versions: @antivirus.versions,
+        background_scan_stats: {
+          scans: scanned_upload_stats[0] || 0,
+          recently_scanned: scanned_upload_stats[1] || 0,
+          quarantined: scanned_upload_stats[2] || 0,
+          found: ReviewableUpload.count
+        }
       }
-    end
-
-    def current_database_version
-      @antivirus.versions.first[:database]
     end
 
     def queue_batch(batch_size: 1000)
@@ -63,6 +62,12 @@ module DiscourseAntivirus
 
         scanned_upload.update_using!(result, current_database_version)
       end
+    end
+
+    private
+
+    def current_database_version
+      @antivirus.versions.first[:database]
     end
   end
 end
