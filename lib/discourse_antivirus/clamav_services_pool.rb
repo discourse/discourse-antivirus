@@ -14,12 +14,6 @@ module DiscourseAntivirus
       end
     end
 
-    def accepting_connections?
-      tcp_socket.present?.tap do |available|
-        PluginStore.set(DiscourseAntivirus::ClamAV::PLUGIN_NAME, UNAVAILABLE, !available)
-      end
-    end
-
     def tcp_socket
       build_socket(service_instance.targets.first)
     end

@@ -39,7 +39,7 @@ after_initialize do
   add_to_serializer(:site, :clamav_unreacheable, false) do
     !!PluginStore.get(
       DiscourseAntivirus::ClamAV::PLUGIN_NAME,
-      DiscourseAntivirus::ClamAVServicesPool::UNAVAILABLE
+      DiscourseAntivirus::ClamAV::UNAVAILABLE
     )
   end
 
@@ -57,10 +57,10 @@ after_initialize do
     should_scan_file = !upload.for_export && (!is_image || SiteSetting.antivirus_live_scan_images)
 
     if validate && should_scan_file && upload.valid?
-      pool = DiscourseAntivirus::ClamAVServicesPool.new
+      antivirus = DiscourseAntivirus::ClamAV.instance
 
-      if pool.accepting_connections?
-        is_positive = DiscourseAntivirus::ClamAV.instance(sockets_pool: pool).scan_file(file)[:found]
+      if antivirus.accepting_connections?
+        is_positive = antivirus.scan_file(file)[:found]
 
         upload.errors.add(:base, I18n.t('scan.virus_found')) if is_positive
       end

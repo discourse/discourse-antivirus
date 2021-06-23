@@ -15,7 +15,7 @@ describe 'plugin live scanning' do
     let(:file) { file_from_fixtures(filename, 'pdf') }
 
     it 'scans regular files and adds an error if the scan result is positive' do
-      mock_services_pool(FakeTCPSocket.positive)
+      mock_antivirus(FakeTCPSocket.positive(include_pong: true))
 
       scanned_upload = UploadCreator.new(file, filename).create_for(user.id)
 
@@ -23,7 +23,7 @@ describe 'plugin live scanning' do
     end
 
     it "scans regular files but does nothing if the scan result is negative" do
-      mock_services_pool(FakeTCPSocket.negative)
+      mock_antivirus(FakeTCPSocket.negative(include_pong: true))
 
       scanned_upload = UploadCreator.new(file, filename).create_for(user.id)
 
@@ -53,7 +53,7 @@ describe 'plugin live scanning' do
 
     context 'when we cannot establish a connection with ClamAV' do
       it 'skips the upload' do
-        mock_services_pool(nil)
+        mock_antivirus(nil)
 
         upload = UploadCreator.new(file, filename).create_for(user.id)
 
@@ -74,7 +74,7 @@ describe 'plugin live scanning' do
 
     it 'scans the image if the live scan images setting is enabled' do
       SiteSetting.antivirus_live_scan_images = true
-      mock_services_pool(FakeTCPSocket.positive)
+      mock_antivirus(FakeTCPSocket.positive(include_pong: true))
 
       scanned_upload = UploadCreator.new(file, filename).create_for(user.id)
 
@@ -82,9 +82,10 @@ describe 'plugin live scanning' do
     end
   end
 
-  def mock_services_pool(socket)
-    pool = OpenStruct.new(tcp_socket: socket, all_tcp_sockets: [socket], accepting_connections?: !socket.nil?)
-    DiscourseAntivirus::ClamAVServicesPool.expects(:new).returns(pool)
+  def mock_antivirus(socket)
+    pool = OpenStruct.new(tcp_socket: socket, all_tcp_sockets: [socket])
+    antivirus = DiscourseAntivirus::ClamAV.new(Discourse.store, pool)
+    DiscourseAntivirus::ClamAV.expects(:instance).returns(antivirus)
   end
 end
 
