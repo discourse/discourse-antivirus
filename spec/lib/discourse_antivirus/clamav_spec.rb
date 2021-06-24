@@ -38,7 +38,7 @@ describe DiscourseAntivirus::ClamAV do
     let(:database_version) { '25853' }
     let(:last_update) { 'Wed Jun 24 10:13:27 2020' }
 
-    let(:socket) { FakeTCPSocket.new("1: #{antivirus_version}/#{database_version}/#{last_update}\0") }
+    let(:socket) { FakeTCPSocket.new(["1: #{antivirus_version}/#{database_version}/#{last_update}\0"]) }
 
     let(:antivirus) do
       build_antivirus(
