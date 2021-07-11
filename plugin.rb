@@ -66,4 +66,9 @@ after_initialize do
       end
     end
   end
+
+  if defined?(::DiscoursePrometheus)
+    require_dependency File.expand_path('../lib/discourse_antivirus/clamav_health_metric.rb', __FILE__)
+    DiscoursePluginRegistry.register_global_collector(DiscourseAntivirus::ClamAVHealthMetric, self)
+  end
 end
