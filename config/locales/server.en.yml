@@ -14,7 +14,7 @@ en:
   
   reviewables:
     reasons:
-      malicious_file: The antivirus flagged this file as malicious. See more at `antivirus` settings.
+      malicious_file: The antivirus flagged this file as malicious. See more at %{link}.
 
   reviewable_score_types:
     malicious_file:
