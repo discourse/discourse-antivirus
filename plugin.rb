@@ -71,4 +71,6 @@ after_initialize do
     require_dependency File.expand_path('../lib/discourse_antivirus/clamav_health_metric.rb', __FILE__)
     DiscoursePluginRegistry.register_global_collector(DiscourseAntivirus::ClamAVHealthMetric, self)
   end
+
+  add_reviewable_score_link(:malicious_file, 'plugin:discourse-antivirus')
 end
