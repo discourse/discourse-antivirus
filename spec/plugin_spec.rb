@@ -97,6 +97,6 @@ describe 'Updating the ClamAV version after enabling the plugin' do
   end
 
   it 'does nothing' do
-    expect { SiteSetting.discourse_antivirus_enabled = false }.to change(Jobs::FetchAntivirusVersion.jobs, :size).by(0)
+    expect { SiteSetting.discourse_antivirus_enabled = false }.not_to change(Jobs::FetchAntivirusVersion.jobs, :size)
   end
 end
