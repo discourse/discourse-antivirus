@@ -3,7 +3,7 @@
 require 'rails_helper'
 require_relative 'support/fake_tcp_socket'
 
-describe 'plugin live scanning' do
+describe DiscourseAntivirus do
   before { SiteSetting.discourse_antivirus_enabled = true }
 
   fab!(:user) { Fabricate(:user) }
@@ -82,21 +82,21 @@ describe 'plugin live scanning' do
     end
   end
 
+  describe 'Updating the ClamAV version after enabling the plugin' do
+    it 'enqueues a job to fetch the latest version' do
+      SiteSetting.antivirus_srv_record = 'srv.record'
+
+      expect { SiteSetting.discourse_antivirus_enabled = true }.to change(Jobs::FetchAntivirusVersion.jobs, :size).by(1)
+    end
+
+    it 'does nothing' do
+      expect { SiteSetting.discourse_antivirus_enabled = false }.not_to change(Jobs::FetchAntivirusVersion.jobs, :size)
+    end
+  end
+
   def mock_antivirus(socket)
     pool = OpenStruct.new(tcp_socket: socket, all_tcp_sockets: [socket])
     antivirus = DiscourseAntivirus::ClamAV.new(Discourse.store, pool)
     DiscourseAntivirus::ClamAV.expects(:instance).returns(antivirus)
-  end
-end
-
-describe 'Updating the ClamAV version after enabling the plugin' do
-  it 'enqueues a job to fetch the latest version' do
-    SiteSetting.antivirus_srv_record = 'srv.record'
-
-    expect { SiteSetting.discourse_antivirus_enabled = true }.to change(Jobs::FetchAntivirusVersion.jobs, :size).by(1)
-  end
-
-  it 'does nothing' do
-    expect { SiteSetting.discourse_antivirus_enabled = false }.not_to change(Jobs::FetchAntivirusVersion.jobs, :size)
   end
 end
