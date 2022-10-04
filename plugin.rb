@@ -33,8 +33,7 @@ after_initialize do
   require_dependency File.expand_path('../jobs/scheduled/flag_quarantined_uploads.rb', __FILE__)
 
   register_reviewable_type ReviewableUpload
-
-  replace_flags(settings: PostActionType.flag_settings, score_type_names: %i[malicious_file])
+  add_reviewable_score_link(:malicious_file, 'plugin:discourse-antivirus')
 
   add_to_serializer(:site, :clamav_unreacheable, false) do
     !!PluginStore.get(
@@ -71,6 +70,4 @@ after_initialize do
     require_dependency File.expand_path('../lib/discourse_antivirus/clamav_health_metric.rb', __FILE__)
     DiscoursePluginRegistry.register_global_collector(DiscourseAntivirus::ClamAVHealthMetric, self)
   end
-
-  add_reviewable_score_link(:malicious_file, 'plugin:discourse-antivirus')
 end

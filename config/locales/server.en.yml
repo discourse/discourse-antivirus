@@ -15,11 +15,9 @@ en:
   reviewables:
     reasons:
       malicious_file: The antivirus flagged this file as malicious. See more at %{link}.
+    reason_titles:
+      malicious_file: Malicious file
 
-  reviewable_score_types:
-    malicious_file:
-      title: Malicious file
-  
   system_messages:
     malicious_file:
       subject_template: A file uploaded by you was flagged as malicious

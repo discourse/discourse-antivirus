@@ -66,7 +66,7 @@ class ScannedUpload < ActiveRecord::Base
       )
       reviewable.update!(target_created_by: upload.user)
       reviewable.add_score(
-        system_user, ReviewableScore.types[:malicious_file],
+        system_user, ReviewableScore.types[:needs_approval],
         created_at: reviewable.created_at, reason: 'malicious_file',
         force_review: true
       )
@@ -77,11 +77,5 @@ class ScannedUpload < ActiveRecord::Base
         post.rebake!(invalidate_oneboxes: true, invalidate_broken_images: true)
       end
     end
-  end
-
-  private
-
-  def handle_scan_result(result)
-    result[:found] ? move_to_quarantine!(result[:message]) : save!
   end
 end
