@@ -83,14 +83,18 @@ describe DiscourseAntivirus do
   end
 
   describe 'Updating the ClamAV version after enabling the plugin' do
-    it 'enqueues a job to fetch the latest version' do
-      SiteSetting.antivirus_srv_record = 'srv.record'
-
-      expect { SiteSetting.discourse_antivirus_enabled = true }.to change(Jobs::FetchAntivirusVersion.jobs, :size).by(1)
+    context 'when disabling antivirus' do
+      it 'does nothing' do
+        expect { SiteSetting.discourse_antivirus_enabled = false }.not_to change(Jobs::FetchAntivirusVersion.jobs, :size)
+      end
     end
 
-    it 'does nothing' do
-      expect { SiteSetting.discourse_antivirus_enabled = false }.not_to change(Jobs::FetchAntivirusVersion.jobs, :size)
+    context 'when enabling antivirus' do
+      before { SiteSetting.discourse_antivirus_enabled = false }
+
+      it 'enqueues a job to fetch the latest version' do
+        expect { SiteSetting.discourse_antivirus_enabled = true }.to change(Jobs::FetchAntivirusVersion.jobs, :size).by(1)
+      end
     end
   end
 

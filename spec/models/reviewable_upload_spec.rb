@@ -56,7 +56,7 @@ describe ReviewableUpload do
       def assert_upload_destroyed(reviewable)
         expect(reviewable.target).to be_nil
         expect(ScannedUpload.where(upload: upload).exists?).to eq(false)
-        expect(reviewable.status).to eq(Reviewable.statuses[:deleted])
+        expect(reviewable).to be_deleted
       end
     end
   end

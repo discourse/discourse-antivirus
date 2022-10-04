@@ -56,7 +56,7 @@ describe ScannedUpload do
 
       reviewable = ReviewableUpload.find_by(target: upload)
 
-      expect(reviewable.status).to eq(Reviewable.statuses[:pending])
+      expect(reviewable).to be_pending
       expect(reviewable.topic).to eq(upload.posts.last.topic)
       expect(reviewable.target_created_by).to eq(upload.user)
       expect(reviewable.target).to eq(upload)
