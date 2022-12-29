@@ -2,7 +2,7 @@
 
 module DiscourseAntivirus
   class ClamAVServicesPool
-    UNAVAILABLE = 'unavailable'
+    UNAVAILABLE = "unavailable"
 
     def self.correctly_configured?
       return true if Rails.env.test?
@@ -29,22 +29,27 @@ module DiscourseAntivirus
       return if target.hostname.blank?
       return if target.port.blank?
 
-      TCPSocket.new(target.hostname, target.port) rescue nil
+      begin
+        TCPSocket.new(target.hostname, target.port)
+      rescue StandardError
+        nil
+      end
     end
 
     def service_instance
-      @instance ||= if Rails.env.production?
-        DNSSD::ServiceInstance.new(
-          Resolv::DNS::Name.create(SiteSetting.antivirus_srv_record)
-        )
-      else
-        OpenStruct.new(targets: [
+      @instance ||=
+        if Rails.env.production?
+          DNSSD::ServiceInstance.new(Resolv::DNS::Name.create(SiteSetting.antivirus_srv_record))
+        else
           OpenStruct.new(
-            hostname: GlobalSetting.clamav_hostname,
-            port: GlobalSetting.clamav_port
+            targets: [
+              OpenStruct.new(
+                hostname: GlobalSetting.clamav_hostname,
+                port: GlobalSetting.clamav_port,
+              ),
+            ],
           )
-        ])
-      end
+        end
     end
   end
 end

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
+require "rails_helper"
 
 describe Jobs::RemoveOrphanedScannedUploads do
   let(:upload) { Fabricate(:upload) }
@@ -10,13 +10,13 @@ describe Jobs::RemoveOrphanedScannedUploads do
     @scanned_upload = ScannedUpload.create_new!(upload)
   end
 
-  it 'does nothing if the upload still exists' do
+  it "does nothing if the upload still exists" do
     subject.execute({})
 
     expect(@scanned_upload.reload).to be_present
   end
 
-  it 'deletes the scanned upload if the upload is gone' do
+  it "deletes the scanned upload if the upload is gone" do
     upload.destroy!
 
     subject.execute({})

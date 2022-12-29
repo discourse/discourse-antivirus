@@ -6,31 +6,40 @@
 # authors: romanrizzi
 # url: https://github.com/discourse/discourse-antivirus
 
-gem 'dns-sd', '0.1.3'
+gem "dns-sd", "0.1.3"
 
 enabled_site_setting :discourse_antivirus_enabled
-register_asset 'stylesheets/reviewable-upload.scss'
+register_asset "stylesheets/reviewable-upload.scss"
 
-PLUGIN_NAME ||= 'DiscourseAntivirus'
+PLUGIN_NAME ||= "DiscourseAntivirus"
 
-load File.expand_path('lib/discourse_antivirus/engine.rb', __dir__)
-load File.expand_path('lib/validators/enable_discourse_antivirus_validator.rb', __dir__)
+load File.expand_path("lib/discourse_antivirus/engine.rb", __dir__)
+load File.expand_path("lib/validators/enable_discourse_antivirus_validator.rb", __dir__)
 
-add_admin_route 'antivirus.title', 'antivirus'
+add_admin_route "antivirus.title", "antivirus"
 
 after_initialize do
-  require_dependency File.expand_path('../app/controllers/discourse_antivirus/antivirus_controller.rb', __FILE__)
-  require_dependency File.expand_path('../lib/discourse_antivirus/clamav_services_pool.rb', __FILE__)
-  require_dependency File.expand_path('../lib/discourse_antivirus/clamav.rb', __FILE__)
-  require_dependency File.expand_path('../lib/discourse_antivirus/background_scan.rb', __FILE__)
-  require_dependency File.expand_path('../models/scanned_upload.rb', __FILE__)
-  require_dependency File.expand_path('../models/reviewable_upload.rb', __FILE__)
-  require_dependency File.expand_path('../serializers/reviewable_upload_serializer.rb', __FILE__)
-  require_dependency File.expand_path('../jobs/scheduled/scan_batch.rb', __FILE__)
-  require_dependency File.expand_path('../jobs/scheduled/create_scanned_uploads.rb', __FILE__)
-  require_dependency File.expand_path('../jobs/scheduled/fetch_antivirus_version.rb', __FILE__)
-  require_dependency File.expand_path('../jobs/scheduled/remove_orphaned_scanned_uploads.rb', __FILE__)
-  require_dependency File.expand_path('../jobs/scheduled/flag_quarantined_uploads.rb', __FILE__)
+  require_dependency File.expand_path(
+                       "../app/controllers/discourse_antivirus/antivirus_controller.rb",
+                       __FILE__,
+                     )
+  require_dependency File.expand_path(
+                       "../lib/discourse_antivirus/clamav_services_pool.rb",
+                       __FILE__,
+                     )
+  require_dependency File.expand_path("../lib/discourse_antivirus/clamav.rb", __FILE__)
+  require_dependency File.expand_path("../lib/discourse_antivirus/background_scan.rb", __FILE__)
+  require_dependency File.expand_path("../models/scanned_upload.rb", __FILE__)
+  require_dependency File.expand_path("../models/reviewable_upload.rb", __FILE__)
+  require_dependency File.expand_path("../serializers/reviewable_upload_serializer.rb", __FILE__)
+  require_dependency File.expand_path("../jobs/scheduled/scan_batch.rb", __FILE__)
+  require_dependency File.expand_path("../jobs/scheduled/create_scanned_uploads.rb", __FILE__)
+  require_dependency File.expand_path("../jobs/scheduled/fetch_antivirus_version.rb", __FILE__)
+  require_dependency File.expand_path(
+                       "../jobs/scheduled/remove_orphaned_scanned_uploads.rb",
+                       __FILE__,
+                     )
+  require_dependency File.expand_path("../jobs/scheduled/flag_quarantined_uploads.rb", __FILE__)
 
   register_reviewable_type ReviewableUpload
 
@@ -39,7 +48,7 @@ after_initialize do
   add_to_serializer(:site, :clamav_unreacheable, false) do
     !!PluginStore.get(
       DiscourseAntivirus::ClamAV::PLUGIN_NAME,
-      DiscourseAntivirus::ClamAV::UNAVAILABLE
+      DiscourseAntivirus::ClamAV::UNAVAILABLE,
     )
   end
 
@@ -48,9 +57,7 @@ after_initialize do
   end
 
   on(:site_setting_changed) do |name, _, new_val|
-    if name == :discourse_antivirus_enabled && new_val
-      Jobs.enqueue(:fetch_antivirus_version)
-    end
+    Jobs.enqueue(:fetch_antivirus_version) if name == :discourse_antivirus_enabled && new_val
   end
 
   on(:before_upload_creation) do |file, is_image, upload, validate|
@@ -62,15 +69,18 @@ after_initialize do
       if antivirus.accepting_connections?
         is_positive = antivirus.scan_file(file)[:found]
 
-        upload.errors.add(:base, I18n.t('scan.virus_found')) if is_positive
+        upload.errors.add(:base, I18n.t("scan.virus_found")) if is_positive
       end
     end
   end
 
   if defined?(::DiscoursePrometheus)
-    require_dependency File.expand_path('../lib/discourse_antivirus/clamav_health_metric.rb', __FILE__)
+    require_dependency File.expand_path(
+                         "../lib/discourse_antivirus/clamav_health_metric.rb",
+                         __FILE__,
+                       )
     DiscoursePluginRegistry.register_global_collector(DiscourseAntivirus::ClamAVHealthMetric, self)
   end
 
-  add_reviewable_score_link(:malicious_file, 'plugin:discourse-antivirus')
+  add_reviewable_score_link(:malicious_file, "plugin:discourse-antivirus")
 end

@@ -1,18 +1,19 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
+require "rails_helper"
 
 describe Jobs::FlagQuarantinedUploads do
-  describe '#execute' do
+  describe "#execute" do
     let(:scan_message) { "Win.Test.EICAR_HDB-1 FOUND" }
     let(:upload) { Fabricate(:upload) }
 
     before do
       SiteSetting.flag_malicious_uploads = true
-      @scanned_upload = ScannedUpload.create!(upload: upload, quarantined: true, scan_result: scan_message)
+      @scanned_upload =
+        ScannedUpload.create!(upload: upload, quarantined: true, scan_result: scan_message)
     end
 
-    it 'flags the upload if it was previously quarantined' do
+    it "flags the upload if it was previously quarantined" do
       subject.execute({})
 
       reviewable_upload = ReviewableUpload.find_by(target: upload)
@@ -21,7 +22,7 @@ describe Jobs::FlagQuarantinedUploads do
       expect(reviewable_upload.payload["scan_message"]).to eq(scan_message)
     end
 
-    it 'does nothing if the flag_malicious_uploads flag is disabled' do
+    it "does nothing if the flag_malicious_uploads flag is disabled" do
       SiteSetting.flag_malicious_uploads = false
 
       subject.execute({})
@@ -30,7 +31,7 @@ describe Jobs::FlagQuarantinedUploads do
       expect(reviewable_upload).to be_nil
     end
 
-    it 'does nothing if a reviewable already exists' do
+    it "does nothing if a reviewable already exists" do
       @scanned_upload.flag_upload
 
       subject.execute({})
@@ -41,7 +42,7 @@ describe Jobs::FlagQuarantinedUploads do
       expect(scores.size).to eq(1)
     end
 
-    it 'does nothing if the scanned upload is not quarantined' do
+    it "does nothing if the scanned upload is not quarantined" do
       @scanned_upload.update!(quarantined: false)
 
       subject.execute({})

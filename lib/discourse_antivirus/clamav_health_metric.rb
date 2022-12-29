@@ -2,11 +2,11 @@
 
 module DiscourseAntivirus
   class ClamAVHealthMetric < ::DiscoursePrometheus::InternalMetric::Custom
-    attribute :name , :labels, :description, :value, :type
+    attribute :name, :labels, :description, :value, :type
 
     def initialize
-      @name = 'clamav_available'
-      @description = 'Whether or not ClamAV is accepting connections'
+      @name = "clamav_available"
+      @description = "Whether or not ClamAV is accepting connections"
       @type = "Gauge"
     end
 
