@@ -7,14 +7,13 @@ module DiscourseAntivirus
     end
 
     def stats
-      scanned_upload_stats = DB.query_single(<<~SQL
+      scanned_upload_stats = DB.query_single(<<~SQL)
         SELECT
           SUM(scans),
           SUM(CASE WHEN scans > 0 AND updated_at >= NOW() - INTERVAL '24 HOURS' THEN 1 ELSE 0 END),
           SUM(CASE WHEN quarantined THEN 1 ELSE 0 END)
         FROM scanned_uploads
       SQL
-      )
 
       {
         versions: @antivirus.versions,
@@ -22,33 +21,32 @@ module DiscourseAntivirus
           scans: scanned_upload_stats[0] || 0,
           recently_scanned: scanned_upload_stats[1] || 0,
           quarantined: scanned_upload_stats[2] || 0,
-          found: ReviewableUpload.count
-        }
+          found: ReviewableUpload.count,
+        },
       }
     end
 
     def queue_batch(batch_size: 1000)
       Upload
-        .where('uploads.id >= 1 AND uploads.user_id >= 1')
-        .joins('LEFT OUTER JOIN scanned_uploads su ON uploads.id = su.upload_id')
-        .where('su.id IS NULL')
+        .where("uploads.id >= 1 AND uploads.user_id >= 1")
+        .joins("LEFT OUTER JOIN scanned_uploads su ON uploads.id = su.upload_id")
+        .where("su.id IS NULL")
         .limit(batch_size)
-        .find_each do |upload|
-          ScannedUpload.create_new!(upload)
-        end
+        .find_each { |upload| ScannedUpload.create_new!(upload) }
     end
 
     def scan_batch(batch_size: 1000)
       ScannedUpload
         .includes(:upload)
-        .where('
+        .where(
+          "
           (NOT quarantined AND
             (
               (next_scan_at IS NULL AND virus_database_version_used < ?) OR
               next_scan_at < NOW()
             )
-          )',
-          current_database_version
+          )",
+          current_database_version,
         )
         .limit(batch_size)
         .find_in_batches { |scanned_uploads| scan(scanned_uploads) }

@@ -1,28 +1,29 @@
 # frozen_string_literal: true
 
-require_dependency 'reviewable'
+require_dependency "reviewable"
 
 class ReviewableUpload < Reviewable
   def build_actions(actions, guardian, _args)
     return [] unless pending?
 
-    reject = actions.add_bundle(
-      'reject_upload',
-      icon: 'thumbs-up',
-      label: 'js.antivirus.remove_upload.title'
-    )
+    reject =
+      actions.add_bundle(
+        "reject_upload",
+        icon: "thumbs-up",
+        label: "js.antivirus.remove_upload.title",
+      )
 
-    build_action(actions, :remove_file, bundle: reject, icon: 'thumbs-up')
-    build_action(actions, :remove_file_and_delete_posts, bundle: reject, icon: 'trash-alt')
+    build_action(actions, :remove_file, bundle: reject, icon: "thumbs-up")
+    build_action(actions, :remove_file_and_delete_posts, bundle: reject, icon: "trash-alt")
 
     if target_created_by && guardian.can_delete_user?(target_created_by)
       build_action(
         actions,
         :remove_file_and_delete_user,
         bundle: reject,
-        icon: 'ban',
-        button_class: 'btn-danger',
-        confirm: true
+        icon: "ban",
+        button_class: "btn-danger",
+        confirm: true,
       )
     end
   end
@@ -63,19 +64,18 @@ class ReviewableUpload < Reviewable
 
   def user_deletion_opts(performed_by)
     base = {
-      context: I18n.t('antivirus.delete_reason', performed_by: performed_by.username),
-      delete_posts: true
+      context: I18n.t("antivirus.delete_reason", performed_by: performed_by.username),
+      delete_posts: true,
     }
 
-    base.tap do |b|
-      b.merge!(block_email: true, block_ip: true) if Rails.env.production?
-    end
+    base.tap { |b| b.merge!(block_email: true, block_ip: true) if Rails.env.production? }
   end
 
-  def post; end
+  def post
+  end
 
   def successful_transition(to_state, update_flag_status)
-    create_result(:success, to_state)  do |result|
+    create_result(:success, to_state) do |result|
       result.update_flag_stats = { status: update_flag_status, user_ids: [created_by_id] }
     end
   end
@@ -84,7 +84,7 @@ class ReviewableUpload < Reviewable
     actions.add(id, bundle: bundle) do |action|
       action.icon = icon
       action.label = "js.antivirus.#{id}"
-      action.confirm_message = 'js.antivirus.reviewable_delete_prompt' if confirm
+      action.confirm_message = "js.antivirus.reviewable_delete_prompt" if confirm
       action.button_class = button_class
     end
   end

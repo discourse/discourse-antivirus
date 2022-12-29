@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
-require_relative '../../support/fake_tcp_socket'
+require "rails_helper"
+require_relative "../../support/fake_tcp_socket"
 
 describe DiscourseAntivirus::ClamAV do
   fab!(:upload) { Fabricate(:image_upload) }
@@ -9,8 +9,8 @@ describe DiscourseAntivirus::ClamAV do
 
   before { file.rewind }
 
-  describe '#scan_upload' do
-    it 'returns false when the file is clear' do
+  describe "#scan_upload" do
+    it "returns false when the file is clear" do
       fake_socket = FakeTCPSocket.negative
       pool = build_fake_pool(socket: fake_socket)
       antivirus = build_antivirus(pool)
@@ -21,7 +21,7 @@ describe DiscourseAntivirus::ClamAV do
       assert_file_was_sent_through(fake_socket, file)
     end
 
-    it 'returns true when the file has a virus' do
+    it "returns true when the file has a virus" do
       fake_socket = FakeTCPSocket.positive
       pool = build_fake_pool(socket: fake_socket)
       antivirus = build_antivirus(pool)
@@ -33,20 +33,18 @@ describe DiscourseAntivirus::ClamAV do
     end
   end
 
-  describe '#version' do
-    let(:antivirus_version) { 'ClamAV 0.102.3' }
-    let(:database_version) { '25853' }
-    let(:last_update) { 'Wed Jun 24 10:13:27 2020' }
+  describe "#version" do
+    let(:antivirus_version) { "ClamAV 0.102.3" }
+    let(:database_version) { "25853" }
+    let(:last_update) { "Wed Jun 24 10:13:27 2020" }
 
-    let(:socket) { FakeTCPSocket.new(["1: #{antivirus_version}/#{database_version}/#{last_update}\0"]) }
-
-    let(:antivirus) do
-      build_antivirus(
-        build_fake_pool(socket: socket)
-      )
+    let(:socket) do
+      FakeTCPSocket.new(["1: #{antivirus_version}/#{database_version}/#{last_update}\0"])
     end
 
-    it 'returns the version from the plugin store after fetching the last one' do
+    let(:antivirus) { build_antivirus(build_fake_pool(socket: socket)) }
+
+    it "returns the version from the plugin store after fetching the last one" do
       antivirus.update_versions
       version = antivirus.versions.first
 
@@ -56,8 +54,12 @@ describe DiscourseAntivirus::ClamAV do
       assert_version_was_requested(socket)
     end
 
-    it 'directly returns the version from the plugin store without fetching' do
-      version_data = { antivirus: antivirus_version, database: database_version.to_i, updated_at: last_update }
+    it "directly returns the version from the plugin store without fetching" do
+      version_data = {
+        antivirus: antivirus_version,
+        database: database_version.to_i,
+        updated_at: last_update,
+      }
       PluginStore.set(described_class::PLUGIN_NAME, described_class::STORE_KEY, [version_data])
 
       version = antivirus.versions.first
@@ -68,7 +70,7 @@ describe DiscourseAntivirus::ClamAV do
       expect(socket.received).to be_empty
     end
 
-    it 'fetches the last version if the plugin store does not have it' do
+    it "fetches the last version if the plugin store does not have it" do
       version = antivirus.versions.first
 
       expect(version[:antivirus]).to eq(antivirus_version)
@@ -79,30 +81,23 @@ describe DiscourseAntivirus::ClamAV do
   end
 
   def assert_version_was_requested(fake_socket)
-    expected = [
-      "nIDSESSION\n",
-      "zVERSION\0",
-      "nEND\0"
-    ]
+    expected = ["nIDSESSION\n", "zVERSION\0", "nEND\0"]
 
     expect(fake_socket.received_before_close).to contain_exactly(*expected)
     expect(fake_socket.received).to be_empty
   end
 
   def assert_file_was_sent_through(fake_socket, file)
-    expected = [
-      "nIDSESSION\n",
-      "zINSTREAM\0",
-    ]
+    expected = ["nIDSESSION\n", "zINSTREAM\0"]
 
     file.rewind
     while data = file.read(2048)
-      expected << [data.length].pack('N')
+      expected << [data.length].pack("N")
       expected << data
     end
 
-    expected << [0].pack('N')
-    expected << ''
+    expected << [0].pack("N")
+    expected << ""
 
     expected << "nEND\0"
 

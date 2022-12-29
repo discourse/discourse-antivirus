@@ -3,10 +3,10 @@
 module DiscourseAntivirus
   class ClamAV
     VIRUS_FOUND = Class.new(StandardError)
-    PLUGIN_NAME = 'discourse-antivirus'
-    STORE_KEY = 'clamav-versions'
-    DOWNLOAD_FAILED = 'Download failed'
-    UNAVAILABLE = 'unavailable'
+    PLUGIN_NAME = "discourse-antivirus"
+    STORE_KEY = "clamav-versions"
+    DOWNLOAD_FAILED = "Download failed"
+    UNAVAILABLE = "unavailable"
 
     def self.instance
       new(Discourse.store, DiscourseAntivirus::ClamAVServicesPool.new)
@@ -22,20 +22,22 @@ module DiscourseAntivirus
     end
 
     def update_versions
-      antivirus_versions = clamav_services_pool.all_tcp_sockets.map do |tcp_socket|
-        antivirus_version = with_session(socket: tcp_socket) do |socket|
-          socket.send("zVERSION\0", 0)
-          read_until(socket, "\0")
+      antivirus_versions =
+        clamav_services_pool.all_tcp_sockets.map do |tcp_socket|
+          antivirus_version =
+            with_session(socket: tcp_socket) do |socket|
+              socket.send("zVERSION\0", 0)
+              read_until(socket, "\0")
+            end
+
+          antivirus_version = clean_msg(antivirus_version).split("/")
+
+          {
+            antivirus: antivirus_version[0],
+            database: antivirus_version[1].to_i,
+            updated_at: antivirus_version[2],
+          }
         end
-
-        antivirus_version = clean_msg(antivirus_version).split('/')
-
-        {
-          antivirus: antivirus_version[0],
-          database: antivirus_version[1].to_i,
-          updated_at: antivirus_version[2]
-        }
-      end
 
       PluginStore.set(PLUGIN_NAME, STORE_KEY, antivirus_versions)
       antivirus_versions
@@ -49,9 +51,7 @@ module DiscourseAntivirus
         return false
       end
 
-      available = sockets.reduce(true) do |memo, socket|
-        memo && target_online?(socket)
-      end
+      available = sockets.reduce(true) { |memo, socket| memo && target_online?(socket) }
 
       available.tap do |status|
         unavailable = !status
@@ -64,10 +64,10 @@ module DiscourseAntivirus
         file = get_uploaded_file(upload)
         scan_file(file)
       rescue OpenURI::HTTPError
-        { error: true, found: '', message: DOWNLOAD_FAILED }
+        { error: true, found: "", message: DOWNLOAD_FAILED }
       rescue StandardError => e
         Rails.logger.error("Could not scan upload #{upload.id}. Error: #{e.message}")
-        { error: true, found: '', message: e.message }
+        { error: true, found: "", message: e.message }
       end
     end
 
@@ -88,16 +88,17 @@ module DiscourseAntivirus
     def target_online?(socket)
       return false if socket.nil?
 
-      ping_result = with_session(socket: socket) do |s|
-        s.send("zPING\0", 0)
-        read_until(s, "\0")
-      end
+      ping_result =
+        with_session(socket: socket) do |s|
+          s.send("zPING\0", 0)
+          read_until(s, "\0")
+        end
 
-      clean_msg(ping_result) == 'PONG'
+      clean_msg(ping_result) == "PONG"
     end
 
     def clean_msg(raw)
-      raw.gsub('1: ', '').strip
+      raw.gsub("1: ", "").strip
     end
 
     def with_session(socket: clamav_services_pool.tcp_socket)
@@ -107,9 +108,9 @@ module DiscourseAntivirus
 
     def parse_response(scan_response)
       {
-        message: scan_response.gsub("1: stream:", ''),
-        found: scan_response.include?('FOUND'),
-        error: false
+        message: scan_response.gsub("1: stream:", ""),
+        found: scan_response.include?("FOUND"),
+        error: false,
       }
     end
 
@@ -126,12 +127,12 @@ module DiscourseAntivirus
       socket.send("zINSTREAM\0", 0)
 
       while data = file.read(2048)
-        socket.send([data.length].pack('N'), 0)
+        socket.send([data.length].pack("N"), 0)
         socket.send(data, 0)
       end
 
-      socket.send([0].pack('N'), 0)
-      socket.send('', 0)
+      socket.send([0].pack("N"), 0)
+      socket.send("", 0)
 
       read_until(socket, "\0")
     end
@@ -148,7 +149,7 @@ module DiscourseAntivirus
     end
 
     def read_until(socket, delimiter)
-      buffer = ''
+      buffer = ""
 
       while (char = socket.getc) != delimiter
         buffer += char

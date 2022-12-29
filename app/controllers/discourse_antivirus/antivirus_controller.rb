@@ -2,7 +2,7 @@
 
 module DiscourseAntivirus
   class AntivirusController < Admin::AdminController
-    requires_plugin 'discourse-antivirus'
+    requires_plugin "discourse-antivirus"
 
     def index
       antivirus = DiscourseAntivirus::ClamAV.instance
