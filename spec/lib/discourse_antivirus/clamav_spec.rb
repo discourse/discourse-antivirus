@@ -7,7 +7,10 @@ describe DiscourseAntivirus::ClamAV do
   fab!(:upload) { Fabricate(:image_upload) }
   let(:file) { File.open(Discourse.store.path_for(upload)) }
 
-  before { file.rewind }
+  before do
+    file.rewind
+    IO.stubs(:select).returns(true)
+  end
 
   describe "#scan_upload" do
     it "returns false when the file is clear" do
@@ -29,6 +32,19 @@ describe DiscourseAntivirus::ClamAV do
       scan_result = antivirus.scan_upload(upload)
 
       expect(scan_result[:found]).to eq(true)
+      assert_file_was_sent_through(fake_socket, file)
+    end
+
+    it "detects if ClamAV returned an error" do
+      fake_socket = FakeTCPSocket.error
+      pool = build_fake_pool(socket: fake_socket)
+      antivirus = build_antivirus(pool)
+
+      scan_result = antivirus.scan_upload(upload)
+
+      expect(scan_result[:message]).to include("ERROR")
+      expect(scan_result[:found]).to eq(false)
+      expect(scan_result[:error]).to eq(true)
       assert_file_was_sent_through(fake_socket, file)
     end
   end

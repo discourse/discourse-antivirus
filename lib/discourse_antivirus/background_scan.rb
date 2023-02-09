@@ -28,9 +28,15 @@ module DiscourseAntivirus
 
     def queue_batch(batch_size: 1000)
       Upload
+        .distinct
         .where("uploads.id >= 1 AND uploads.user_id >= 1")
         .joins("LEFT OUTER JOIN scanned_uploads su ON uploads.id = su.upload_id")
+        .joins("LEFT OUTER JOIN upload_references ur ON uploads.id = ur.upload_id")
+        .joins("LEFT OUTER JOIN posts p ON ur.target_id = p.id")
         .where("su.id IS NULL")
+        .where(
+          "ur.id IS NULL OR ur.target_type <> 'Post' OR (ur.target_type = 'Post' AND p.user_id >= 1)",
+        )
         .limit(batch_size)
         .find_each { |upload| ScannedUpload.create_new!(upload) }
     end

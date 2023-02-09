@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "rails_helper"
+require_relative "../../support/fake_tcp_socket"
 
 describe DiscourseAntivirus::BackgroundScan do
   fab!(:upload) { Fabricate(:image_upload) }
@@ -43,7 +44,7 @@ describe DiscourseAntivirus::BackgroundScan do
       expect(scanned_upload.quarantined).to eq(true)
     end
 
-    it "will try again in 24 hours if the file download fails" do
+    it "will try again if the file download fails" do
       socket = FakeTCPSocket.negative
       store = Discourse.store
       store.stubs(:external?).returns(true)
@@ -62,6 +63,39 @@ describe DiscourseAntivirus::BackgroundScan do
 
       expect(scanned_upload.scans).to eq(0)
       expect(scanned_upload.scan_result).to eq(DiscourseAntivirus::ClamAV::DOWNLOAD_FAILED)
+      expect(scanned_upload.next_scan_at).to be_present
+      expect(scanned_upload.last_scan_failed).to eq(true)
+    end
+
+    it "will try again if the store returns nil" do
+      socket = FakeTCPSocket.negative
+      store = Discourse.store
+      store.stubs(:external?).returns(true)
+      filesize = upload.filesize + 2.megabytes
+      store.expects(:download).with(upload, max_file_size_kb: filesize).returns(nil)
+
+      antivirus = DiscourseAntivirus::ClamAV.new(store, build_fake_pool(socket: socket))
+      scanner = described_class.new(antivirus)
+      scanned_upload = ScannedUpload.create_new!(upload)
+
+      scanner.scan([scanned_upload])
+      scanned_upload.reload
+
+      expect(scanned_upload.scans).to eq(0)
+      expect(scanned_upload.scan_result).to eq(DiscourseAntivirus::ClamAV::DOWNLOAD_FAILED)
+      expect(scanned_upload.next_scan_at).to be_present
+      expect(scanned_upload.last_scan_failed).to eq(true)
+    end
+
+    it "will try again if we couldn't read the response from the socket" do
+      scanner = build_scanner(simulate_read_error: true)
+      scanned_upload = ScannedUpload.create_new!(upload)
+
+      scanner.scan([scanned_upload])
+      scanned_upload.reload
+
+      expect(scanned_upload.scans).to eq(0)
+      expect(scanned_upload.scan_result).to eq(DiscourseAntivirus::ClamAV::SOCKET_READ_ERROR)
       expect(scanned_upload.next_scan_at).to be_present
       expect(scanned_upload.last_scan_failed).to eq(true)
     end
@@ -84,6 +118,36 @@ describe DiscourseAntivirus::BackgroundScan do
       scanned_upload = ScannedUpload.find_by(upload: upload)
 
       expect(scanned_upload.scans).not_to be_zero
+    end
+
+    it "skips uploads when all associated posts are from a bot (like data exports)" do
+      Fabricate(:post, user: Discourse.system_user, uploads: [upload])
+
+      build_scanner(quarantine_files: false).queue_batch
+      scanned_upload = ScannedUpload.find_by(upload: upload)
+
+      expect(scanned_upload).to be_nil
+    end
+
+    it "creates the scanned upload when the upload was referenced by another user" do
+      Fabricate(:post, user: Discourse.system_user, uploads: [upload])
+      Fabricate(:post, uploads: [upload])
+
+      build_scanner(quarantine_files: false).queue_batch
+      scanned_upload = ScannedUpload.where(upload: upload)
+
+      # Ensure we only created one scanned upload record
+      expect(scanned_upload.count).to eq(1)
+    end
+
+    it "created the scanned upload when the upload was referenced by multiple users" do
+      2.times { Fabricate(:post, uploads: [upload]) }
+
+      build_scanner(quarantine_files: false).queue_batch
+      scanned_upload = ScannedUpload.where(upload: upload)
+
+      # Ensure we only created one scanned upload record
+      expect(scanned_upload.count).to eq(1)
     end
   end
 
@@ -217,7 +281,9 @@ describe DiscourseAntivirus::BackgroundScan do
     OpenStruct.new(tcp_socket: socket, all_tcp_sockets: [socket])
   end
 
-  def build_scanner(quarantine_files: false)
+  def build_scanner(quarantine_files: false, simulate_read_error: false)
+    select_response = simulate_read_error ? nil : true
+    IO.stubs(:select).returns(select_response)
     socket = quarantine_files ? FakeTCPSocket.positive : FakeTCPSocket.negative
     antivirus = DiscourseAntivirus::ClamAV.new(Discourse.store, build_fake_pool(socket: socket))
     described_class.new(antivirus)
