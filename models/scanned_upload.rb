@@ -9,7 +9,7 @@ class ScannedUpload < ActiveRecord::Base
 
   def update_using!(result, database_version)
     if result[:error]
-      self.next_scan_at = 1.day.from_now
+      self.next_scan_at = 6.hours.from_now
       self.last_scan_failed = true
       self.scan_result = result[:message]
     else

@@ -6,7 +6,10 @@ module DiscourseAntivirus
     PLUGIN_NAME = "discourse-antivirus"
     STORE_KEY = "clamav-versions"
     DOWNLOAD_FAILED = "Download failed"
+    SOCKET_READ_ERROR = "Timed out while reading from socket"
     UNAVAILABLE = "unavailable"
+
+    SOCKET_READ_TIMEOUT = 5
 
     def self.instance
       new(Discourse.store, DiscourseAntivirus::ClamAVServicesPool.new)
@@ -62,17 +65,22 @@ module DiscourseAntivirus
     def scan_upload(upload)
       begin
         file = get_uploaded_file(upload)
+
+        return error_response(DOWNLOAD_FAILED) if file.nil?
+
         scan_file(file)
       rescue OpenURI::HTTPError
-        { error: true, found: "", message: DOWNLOAD_FAILED }
+        error_response(DOWNLOAD_FAILED)
       rescue StandardError => e
         Rails.logger.error("Could not scan upload #{upload.id}. Error: #{e.message}")
-        { error: true, found: "", message: e.message }
+        error_response(e.message)
       end
     end
 
     def scan_file(file)
       scan_response = with_session { |socket| stream_file(socket, file) }
+
+      return error_response(SOCKET_READ_ERROR) if scan_response.nil?
 
       parse_response(scan_response)
     end
@@ -80,6 +88,10 @@ module DiscourseAntivirus
     private
 
     attr_reader :store, :clamav_services_pool
+
+    def error_response(error_message)
+      { error: true, found: false, message: error_message }
+    end
 
     def update_status(unavailable)
       PluginStore.set(PLUGIN_NAME, UNAVAILABLE, unavailable)
@@ -110,7 +122,7 @@ module DiscourseAntivirus
       {
         message: scan_response.gsub("1: stream:", ""),
         found: scan_response.include?("FOUND"),
-        error: false,
+        error: scan_response.include?("ERROR"),
       }
     end
 
@@ -149,6 +161,15 @@ module DiscourseAntivirus
     end
 
     def read_until(socket, delimiter)
+      # It monitors given arrays of IO objects,
+      # waits one or more of IO objects ready for reading, are ready for writing,
+      # and have pending exceptions respectively, and returns an array that contains
+      # arrays of those IO objects. It will return nil if optional timeout value is
+      # given and no IO object is ready in timeout seconds.
+      response_ready = IO.select([socket], nil, nil, SOCKET_READ_TIMEOUT)
+
+      return nil if !response_ready
+
       buffer = ""
 
       while (char = socket.getc) != delimiter

@@ -12,6 +12,10 @@ class FakeTCPSocket
     new(responses)
   end
 
+  def self.error
+    new(["1: INSTREAM size limit exceeded. ERROR\0"])
+  end
+
   def initialize(canned_responses)
     @canned_responses = canned_responses
     @received_before_close = []

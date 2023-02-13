@@ -105,6 +105,7 @@ describe DiscourseAntivirus do
   end
 
   def mock_antivirus(socket)
+    IO.stubs(:select).returns(true)
     pool = OpenStruct.new(tcp_socket: socket, all_tcp_sockets: [socket])
     antivirus = DiscourseAntivirus::ClamAV.new(Discourse.store, pool)
     DiscourseAntivirus::ClamAV.expects(:instance).returns(antivirus)
