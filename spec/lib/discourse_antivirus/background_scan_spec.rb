@@ -86,19 +86,6 @@ describe DiscourseAntivirus::BackgroundScan do
       expect(scanned_upload.next_scan_at).to be_present
       expect(scanned_upload.last_scan_failed).to eq(true)
     end
-
-    it "will try again if we couldn't read the response from the socket" do
-      scanner = build_scanner(simulate_read_error: true)
-      scanned_upload = ScannedUpload.create_new!(upload)
-
-      scanner.scan([scanned_upload])
-      scanned_upload.reload
-
-      expect(scanned_upload.scans).to eq(0)
-      expect(scanned_upload.scan_result).to eq(DiscourseAntivirus::ClamAV::SOCKET_READ_ERROR)
-      expect(scanned_upload.next_scan_at).to be_present
-      expect(scanned_upload.last_scan_failed).to eq(true)
-    end
   end
 
   describe "#queue_batch" do
@@ -281,9 +268,8 @@ describe DiscourseAntivirus::BackgroundScan do
     OpenStruct.new(tcp_socket: socket, all_tcp_sockets: [socket])
   end
 
-  def build_scanner(quarantine_files: false, simulate_read_error: false)
-    select_response = simulate_read_error ? nil : true
-    IO.stubs(:select).returns(select_response)
+  def build_scanner(quarantine_files: false)
+    IO.stubs(:select)
     socket = quarantine_files ? FakeTCPSocket.positive : FakeTCPSocket.negative
     antivirus = DiscourseAntivirus::ClamAV.new(Discourse.store, build_fake_pool(socket: socket))
     described_class.new(antivirus)

@@ -27,15 +27,23 @@ class FakeTCPSocket
   attr_reader :received, :received_before_close
   attr_accessor :canned_responses
 
-  def send(text, _)
+  def sendmsg_nonblock(text, _, _)
     received << text
   end
 
-  def getc
-    canned_responses[@current_response][@next_to_read].tap do |c|
-      @next_to_read += 1
-      @current_response += 1 if c == "\0"
+  def recvmsg_nonblock(maxlen)
+    interval_end = @next_to_read + maxlen
+
+    response_chunk = canned_responses[@current_response][@next_to_read..interval_end]
+
+    if response_chunk.ends_with?("\0")
+      @current_response += 1
+      @next_to_read = 0
+    else
+      @next_to_read += interval_end + 1
     end
+
+    [response_chunk]
   end
 
   def close

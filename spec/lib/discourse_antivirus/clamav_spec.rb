@@ -9,7 +9,7 @@ describe DiscourseAntivirus::ClamAV do
 
   before do
     file.rewind
-    IO.stubs(:select).returns(true)
+    IO.stubs(:select)
   end
 
   describe "#scan_upload" do
@@ -97,14 +97,14 @@ describe DiscourseAntivirus::ClamAV do
   end
 
   def assert_version_was_requested(fake_socket)
-    expected = ["nIDSESSION\n", "zVERSION\0", "nEND\0"]
+    expected = ["zIDSESSION\0", "zVERSION\0", "zEND\0"]
 
     expect(fake_socket.received_before_close).to contain_exactly(*expected)
     expect(fake_socket.received).to be_empty
   end
 
   def assert_file_was_sent_through(fake_socket, file)
-    expected = ["nIDSESSION\n", "zINSTREAM\0"]
+    expected = ["zIDSESSION\0", "zINSTREAM\0"]
 
     file.rewind
     while data = file.read(2048)
@@ -115,7 +115,7 @@ describe DiscourseAntivirus::ClamAV do
     expected << [0].pack("N")
     expected << ""
 
-    expected << "nEND\0"
+    expected << "zEND\0"
 
     expect(fake_socket.received_before_close).to contain_exactly(*expected)
     expect(fake_socket.received).to be_empty

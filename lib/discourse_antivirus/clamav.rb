@@ -6,10 +6,7 @@ module DiscourseAntivirus
     PLUGIN_NAME = "discourse-antivirus"
     STORE_KEY = "clamav-versions"
     DOWNLOAD_FAILED = "Download failed"
-    SOCKET_READ_ERROR = "Timed out while reading from socket"
     UNAVAILABLE = "unavailable"
-
-    SOCKET_READ_TIMEOUT = 5
 
     def self.instance
       new(Discourse.store, DiscourseAntivirus::ClamAVServicesPool.new)
@@ -28,10 +25,7 @@ module DiscourseAntivirus
       antivirus_versions =
         clamav_services_pool.all_tcp_sockets.map do |tcp_socket|
           antivirus_version =
-            with_session(socket: tcp_socket) do |socket|
-              socket.send("zVERSION\0", 0)
-              read_until(socket, "\0")
-            end
+            with_session(socket: tcp_socket) { |socket| write_in_socket(socket, "zVERSION\0") }
 
           antivirus_version = clean_msg(antivirus_version).split("/")
 
@@ -80,8 +74,6 @@ module DiscourseAntivirus
     def scan_file(file)
       scan_response = with_session { |socket| stream_file(socket, file) }
 
-      return error_response(SOCKET_READ_ERROR) if scan_response.nil?
-
       parse_response(scan_response)
     end
 
@@ -100,11 +92,7 @@ module DiscourseAntivirus
     def target_online?(socket)
       return false if socket.nil?
 
-      ping_result =
-        with_session(socket: socket) do |s|
-          s.send("zPING\0", 0)
-          read_until(s, "\0")
-        end
+      ping_result = with_session(socket: socket) { |s| write_in_socket(s, "zPING\0") }
 
       clean_msg(ping_result) == "PONG"
     end
@@ -114,39 +102,35 @@ module DiscourseAntivirus
     end
 
     def with_session(socket: clamav_services_pool.tcp_socket)
-      open_session(socket)
-      yield(socket).tap { |_| close_socket(socket) }
+      write_in_socket(socket, "zIDSESSION\0")
+
+      yield(socket)
+
+      write_in_socket(socket, "zEND\0")
+
+      response = get_full_response_from(socket)
+      socket.close
+      response
     end
 
     def parse_response(scan_response)
       {
-        message: scan_response.gsub("1: stream:", ""),
+        message: scan_response.gsub("1: stream:", "").gsub("\0", ""),
         found: scan_response.include?("FOUND"),
         error: scan_response.include?("ERROR"),
       }
     end
 
-    def open_session(socket)
-      socket.send("nIDSESSION\n", 0)
-    end
-
-    def close_socket(socket)
-      socket.send("nEND\0", 0)
-      socket.close
-    end
-
     def stream_file(socket, file)
-      socket.send("zINSTREAM\0", 0)
+      write_in_socket(socket, "zINSTREAM\0")
 
       while data = file.read(2048)
-        socket.send([data.length].pack("N"), 0)
-        socket.send(data, 0)
+        write_in_socket(socket, [data.length].pack("N"))
+        write_in_socket(socket, data)
       end
 
-      socket.send([0].pack("N"), 0)
-      socket.send("", 0)
-
-      read_until(socket, "\0")
+      write_in_socket(socket, [0].pack("N"))
+      write_in_socket(socket, "")
     end
 
     def get_uploaded_file(upload)
@@ -160,21 +144,28 @@ module DiscourseAntivirus
       end
     end
 
-    def read_until(socket, delimiter)
-      # It monitors given arrays of IO objects,
-      # waits one or more of IO objects ready for reading, are ready for writing,
-      # and have pending exceptions respectively, and returns an array that contains
-      # arrays of those IO objects. It will return nil if optional timeout value is
-      # given and no IO object is ready in timeout seconds.
-      response_ready = IO.select([socket], nil, nil, SOCKET_READ_TIMEOUT)
+    # ClamAV wants us to read/write in a non-blocking manner to prevent deadlocks.
+    # Read more about this [here](https://manpages.debian.org/testing/clamav-daemon/clamd.8.en.html#IDSESSION,)
+    #
+    # We need to peek into the socket buffer to make sure we can write/read from it,
+    # or we risk ClamAV abruptly closing the connection.
+    # For that, we use [IO#select](https://www.rubydoc.info/stdlib/core/IO.select)
+    def write_in_socket(socket, msg)
+      IO.select(nil, [socket])
+      socket.sendmsg_nonblock(msg, 0, nil)
+    end
 
-      return nil if !response_ready
+    def read_from_socket(socket)
+      IO.select([socket])
 
+      # Returns an array with the chunk as the first element
+      socket.recvmsg_nonblock(25).to_a.first.to_s
+    end
+
+    def get_full_response_from(socket)
       buffer = ""
 
-      while (char = socket.getc) != delimiter
-        buffer += char
-      end
+      buffer += read_from_socket(socket) until buffer.ends_with?("\0")
 
       buffer
     end
