@@ -1,6 +1,6 @@
 {{#if reviewable.topic}}
   <div class="flagged-post-header">
-    {{reviewable-topic-link reviewable=reviewable tagName=""}}
+    <ReviewableTopicLink @reviewable={{reviewable}} @tagName="" />
   </div>
 {{/if}}
 
@@ -8,7 +8,10 @@
   <div class="reviewable-upload-contents">
     <div class="post-contents-wrapper">
       {{#if reviewable.target_created_by}}
-        {{reviewable-created-by user=reviewable.target_created_by tagName=""}}
+        <ReviewableCreatedBy
+          @user={{reviewable.target_created_by}}
+          @tagName=""
+        />
       {{/if}}
 
       <div class="post-contents">
@@ -18,23 +21,23 @@
       </div>
     </div>
 
-    {{reviewable-field
-      classes="reviewable-upload-details scan-result"
-      name=(i18n "review.file.scan_result")
-      value=reviewable.payload.scan_message
-    }}
+    <ReviewableField
+      @classes="reviewable-upload-details scan-result"
+      @name={{i18n "review.file.scan_result"}}
+      @value={{reviewable.payload.scan_message}}
+    />
 
-    {{reviewable-field
-      classes="reviewable-upload-details filename"
-      name=(i18n "review.file.filename")
-      value=reviewable.payload.original_filename
-    }}
+    <ReviewableField
+      @classes="reviewable-upload-details filename"
+      @name={{i18n "review.file.filename"}}
+      @value={{reviewable.payload.original_filename}}
+    />
 
-    {{reviewable-field
-      classes="reviewable-upload-details uploaded-by"
-      name=(i18n "review.file.uploaded_by")
-      value=reviewable.payload.uploaded_by
-    }}
+    <ReviewableField
+      @classes="reviewable-upload-details uploaded-by"
+      @name={{i18n "review.file.uploaded_by"}}
+      @value={{reviewable.payload.uploaded_by}}
+    />
   </div>
 
   {{yield}}
