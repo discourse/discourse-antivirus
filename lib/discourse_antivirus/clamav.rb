@@ -72,11 +72,12 @@ module DiscourseAntivirus
       socket = sockets.shuffle.find { |s| target_online?(s) }
       sockets.each { |s| s&.close if socket != s }
 
-      scan_response = begin
-        with_session(socket) { |s| stream_file(s, file) }
-      rescue StandardError => e
-        e.message
-      end
+      scan_response =
+        begin
+          with_session(socket) { |s| stream_file(s, file) }
+        rescue StandardError => e
+          e.message
+        end
 
       parse_response(scan_response)
     end
