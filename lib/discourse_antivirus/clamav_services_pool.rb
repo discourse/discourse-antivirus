@@ -26,7 +26,7 @@ module DiscourseAntivirus
       return if target.port.blank?
 
       begin
-        TCPSocket.new(target.hostname, target.port)
+        TCPSocket.new(target.hostname, target.port, connect_timeout: 3)
       rescue StandardError
         nil
       end
