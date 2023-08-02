@@ -41,19 +41,11 @@ module DiscourseAntivirus
     end
 
     def accepting_connections?
-      sockets = clamav_services_pool.all_tcp_sockets
+      available = clamav_services_pool.all_tcp_sockets.any? { |socket| target_online?(socket) }
 
-      if sockets.empty?
-        update_status(true)
-        return false
-      end
+      update_status(!available)
 
-      available = sockets.reduce(true) { |memo, socket| memo && target_online?(socket) }
-
-      available.tap do |status|
-        unavailable = !status
-        update_status(unavailable)
-      end
+      available
     end
 
     def scan_upload(upload)
@@ -101,7 +93,10 @@ module DiscourseAntivirus
       raw.gsub("1: ", "").strip
     end
 
-    def with_session(socket: clamav_services_pool.tcp_socket)
+    def with_session(socket: nil)
+      socket ||= clamav_services_pool.all_tcp_sockets.shuffle.find { |s| target_online?(s) }
+      raise "no online socket found" if !socket
+
       write_in_socket(socket, "zIDSESSION\0")
 
       yield(socket)

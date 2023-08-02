@@ -14,10 +14,6 @@ module DiscourseAntivirus
       end
     end
 
-    def tcp_socket
-      build_socket(service_instance.targets.first)
-    end
-
     def all_tcp_sockets
       service_instance.targets.map { |target| build_socket(target) }
     end
