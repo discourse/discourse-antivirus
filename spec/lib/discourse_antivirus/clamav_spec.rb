@@ -104,7 +104,7 @@ describe DiscourseAntivirus::ClamAV do
   end
 
   def assert_file_was_sent_through(fake_socket, file)
-    expected = ["zIDSESSION\0", "zINSTREAM\0"]
+    expected = ["zPING\0", "zIDSESSION\0", "zINSTREAM\0"]
 
     file.rewind
     while data = file.read(2048)

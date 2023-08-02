@@ -25,7 +25,7 @@ module DiscourseAntivirus
       antivirus_versions =
         clamav_services_pool.all_tcp_sockets.map do |tcp_socket|
           antivirus_version =
-            with_session(socket: tcp_socket) { |socket| write_in_socket(socket, "zVERSION\0") }
+            with_session(tcp_socket) { |socket| write_in_socket(socket, "zVERSION\0") }
 
           antivirus_version = clean_msg(antivirus_version).split("/")
 
@@ -41,7 +41,10 @@ module DiscourseAntivirus
     end
 
     def accepting_connections?
-      available = clamav_services_pool.all_tcp_sockets.any? { |socket| target_online?(socket) }
+      # At least a server must be online
+      sockets = clamav_services_pool.all_tcp_sockets
+      available = sockets.any? { |s| target_online?(s) }
+      sockets.each { |s| s&.close }
 
       update_status(!available)
 
@@ -64,7 +67,16 @@ module DiscourseAntivirus
     end
 
     def scan_file(file)
-      scan_response = with_session { |socket| stream_file(socket, file) }
+      # Find a random online server and close sockets to the other ones
+      sockets = clamav_services_pool.all_tcp_sockets
+      socket = sockets.shuffle.find { |s| target_online?(s) }
+      sockets.each { |s| s&.close if socket != s }
+
+      scan_response = begin
+        with_session(socket) { |s| stream_file(s, file) }
+      rescue StandardError => e
+        e.message
+      end
 
       parse_response(scan_response)
     end
@@ -84,18 +96,19 @@ module DiscourseAntivirus
     def target_online?(socket)
       return false if socket.nil?
 
-      ping_result = with_session(socket: socket) { |s| write_in_socket(s, "zPING\0") }
+      write_in_socket(socket, "zPING\0")
 
-      clean_msg(ping_result) == "PONG"
+      response = get_full_response_from(socket)
+
+      clean_msg(response) == "PONG"
     end
 
     def clean_msg(raw)
       raw.gsub("1: ", "").strip
     end
 
-    def with_session(socket: nil)
-      socket ||= clamav_services_pool.all_tcp_sockets.shuffle.find { |s| target_online?(s) }
-      raise "no online socket found" if !socket
+    def with_session(socket)
+      raise "ERROR: socket cannot be open" if !socket
 
       write_in_socket(socket, "zIDSESSION\0")
 

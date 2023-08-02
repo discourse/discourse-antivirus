@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "rails_helper"
+require_relative "support/fake_pool"
 require_relative "support/fake_tcp_socket"
 
 describe DiscourseAntivirus do
@@ -15,7 +16,7 @@ describe DiscourseAntivirus do
     let(:file) { file_from_fixtures(filename, "pdf") }
 
     it "scans regular files and adds an error if the scan result is positive" do
-      mock_antivirus(FakeTCPSocket.positive(include_pong: true))
+      mock_antivirus(FakeTCPSocket.positive)
 
       scanned_upload = UploadCreator.new(file, filename).create_for(user.id)
 
@@ -23,7 +24,7 @@ describe DiscourseAntivirus do
     end
 
     it "scans regular files but does nothing if the scan result is negative" do
-      mock_antivirus(FakeTCPSocket.negative(include_pong: true))
+      mock_antivirus(FakeTCPSocket.negative)
 
       scanned_upload = UploadCreator.new(file, filename).create_for(user.id)
 
@@ -74,7 +75,7 @@ describe DiscourseAntivirus do
 
     it "scans the image if the live scan images setting is enabled" do
       SiteSetting.antivirus_live_scan_images = true
-      mock_antivirus(FakeTCPSocket.positive(include_pong: true))
+      mock_antivirus(FakeTCPSocket.positive)
 
       scanned_upload = UploadCreator.new(file, filename).create_for(user.id)
 
@@ -106,7 +107,7 @@ describe DiscourseAntivirus do
 
   def mock_antivirus(socket)
     IO.stubs(:select).returns(true)
-    pool = OpenStruct.new(tcp_socket: socket, all_tcp_sockets: [socket])
+    pool = FakePool.new([socket])
     antivirus = DiscourseAntivirus::ClamAV.new(Discourse.store, pool)
     DiscourseAntivirus::ClamAV.expects(:instance).returns(antivirus)
   end

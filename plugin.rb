@@ -67,7 +67,8 @@ after_initialize do
       antivirus = DiscourseAntivirus::ClamAV.instance
 
       if antivirus.accepting_connections?
-        is_positive = antivirus.scan_file(file)[:found]
+        response = antivirus.scan_file(file)
+        is_positive = response[:found]
 
         upload.errors.add(:base, I18n.t("scan.virus_found")) if is_positive
       end
