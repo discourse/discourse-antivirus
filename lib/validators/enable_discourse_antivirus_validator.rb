@@ -8,7 +8,7 @@ class EnableDiscourseAntivirusValidator
   def valid_value?(val)
     return true if val == "f"
 
-    DiscourseAntivirus::ClamAVServicesPool.correctly_configured?
+    DiscourseAntivirus::ClamAV.correctly_configured?
   end
 
   def error_message

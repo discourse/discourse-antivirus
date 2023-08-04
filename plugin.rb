@@ -19,27 +19,19 @@ load File.expand_path("lib/validators/enable_discourse_antivirus_validator.rb", 
 add_admin_route "antivirus.title", "antivirus"
 
 after_initialize do
-  require_dependency File.expand_path(
-                       "../app/controllers/discourse_antivirus/antivirus_controller.rb",
-                       __FILE__,
-                     )
-  require_dependency File.expand_path(
-                       "../lib/discourse_antivirus/clamav_services_pool.rb",
-                       __FILE__,
-                     )
-  require_dependency File.expand_path("../lib/discourse_antivirus/clamav.rb", __FILE__)
-  require_dependency File.expand_path("../lib/discourse_antivirus/background_scan.rb", __FILE__)
-  require_dependency File.expand_path("../models/scanned_upload.rb", __FILE__)
-  require_dependency File.expand_path("../models/reviewable_upload.rb", __FILE__)
-  require_dependency File.expand_path("../serializers/reviewable_upload_serializer.rb", __FILE__)
-  require_dependency File.expand_path("../jobs/scheduled/scan_batch.rb", __FILE__)
-  require_dependency File.expand_path("../jobs/scheduled/create_scanned_uploads.rb", __FILE__)
-  require_dependency File.expand_path("../jobs/scheduled/fetch_antivirus_version.rb", __FILE__)
-  require_dependency File.expand_path(
-                       "../jobs/scheduled/remove_orphaned_scanned_uploads.rb",
-                       __FILE__,
-                     )
-  require_dependency File.expand_path("../jobs/scheduled/flag_quarantined_uploads.rb", __FILE__)
+  require_relative "app/controllers/discourse_antivirus/antivirus_controller.rb"
+  require_relative "lib/discourse_antivirus/clamav_services_pool.rb"
+  require_relative "lib/discourse_antivirus/clamav_service.rb"
+  require_relative "lib/discourse_antivirus/clamav.rb"
+  require_relative "lib/discourse_antivirus/background_scan.rb"
+  require_relative "models/scanned_upload.rb"
+  require_relative "models/reviewable_upload.rb"
+  require_relative "serializers/reviewable_upload_serializer.rb"
+  require_relative "jobs/scheduled/scan_batch.rb"
+  require_relative "jobs/scheduled/create_scanned_uploads.rb"
+  require_relative "jobs/scheduled/fetch_antivirus_version.rb"
+  require_relative "jobs/scheduled/remove_orphaned_scanned_uploads.rb"
+  require_relative "jobs/scheduled/flag_quarantined_uploads.rb"
 
   register_reviewable_type ReviewableUpload
 
@@ -76,10 +68,8 @@ after_initialize do
   end
 
   if defined?(::DiscoursePrometheus)
-    require_dependency File.expand_path(
-                         "../lib/discourse_antivirus/clamav_health_metric.rb",
-                         __FILE__,
-                       )
+    require_relative "lib/discourse_antivirus/clamav_health_metric.rb"
+
     DiscoursePluginRegistry.register_global_collector(DiscourseAntivirus::ClamAVHealthMetric, self)
   end
 

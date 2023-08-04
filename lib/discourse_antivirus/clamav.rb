@@ -12,6 +12,16 @@ module DiscourseAntivirus
       new(Discourse.store, DiscourseAntivirus::ClamAVServicesPool.new)
     end
 
+    def self.correctly_configured?
+      return true if Rails.env.test?
+
+      if Rails.env.production?
+        SiteSetting.antivirus_srv_record.present?
+      else
+        GlobalSetting.respond_to?(:clamav_hostname) && GlobalSetting.respond_to?(:clamav_port)
+      end
+    end
+
     def initialize(store, clamav_services_pool)
       @store = store
       @clamav_services_pool = clamav_services_pool
@@ -23,10 +33,8 @@ module DiscourseAntivirus
 
     def update_versions
       antivirus_versions =
-        clamav_services_pool.all_tcp_sockets.map do |tcp_socket|
-          antivirus_version =
-            with_session(tcp_socket) { |socket| write_in_socket(socket, "zVERSION\0") }
-
+        clamav_services_pool.instances.map do |instance|
+          antivirus_version = with_session(instance) { |s| write_in_socket(s, "zVERSION\0") }
           antivirus_version = clean_msg(antivirus_version).split("/")
 
           {
@@ -41,10 +49,7 @@ module DiscourseAntivirus
     end
 
     def accepting_connections?
-      # At least a server must be online
-      sockets = clamav_services_pool.all_tcp_sockets
-      available = sockets.any? { |s| target_online?(s) }
-      sockets.each { |s| s&.close }
+      available = online_target.present?
 
       update_status(!available)
 
@@ -67,14 +72,9 @@ module DiscourseAntivirus
     end
 
     def scan_file(file)
-      # Find a random online server and close sockets to the other ones
-      sockets = clamav_services_pool.all_tcp_sockets
-      socket = sockets.shuffle.find { |s| target_online?(s) }
-      sockets.each { |s| s&.close if socket != s }
-
       scan_response =
         begin
-          with_session(socket) { |s| stream_file(s, file) }
+          with_session { |socket| stream_file(socket, file) }
         rescue StandardError => e
           e.message
         end
@@ -94,21 +94,21 @@ module DiscourseAntivirus
       PluginStore.set(PLUGIN_NAME, UNAVAILABLE, unavailable)
     end
 
-    def target_online?(socket)
-      return false if socket.nil?
+    def online_target
+      clamav_services_pool.instances.find do |instance|
+        ping_result = with_session(instance) { |s| write_in_socket(s, "zPING\0") }
 
-      write_in_socket(socket, "zPING\0")
-
-      response = get_full_response_from(socket)
-
-      clean_msg(response) == "PONG"
+        clean_msg(ping_result) == "PONG"
+      end
     end
 
     def clean_msg(raw)
       raw.gsub("1: ", "").strip
     end
 
-    def with_session(socket)
+    def with_session(instance = online_target)
+      socket = instance&.connect!
+
       raise "ERROR: socket cannot be open" if !socket
 
       write_in_socket(socket, "zIDSESSION\0")
