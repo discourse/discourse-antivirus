@@ -1,15 +1,18 @@
 # frozen_string_literal: true
 
-class FakePool
+class FakePool < DiscourseAntivirus::ClamAVServicesPool
   def initialize(sockets)
     @sockets = sockets
+    @connections = 0
   end
 
-  def tcp_socket
-    @sockets.first.dup
+  private
+
+  def connection_factory
+    Proc.new { @sockets[@connections].tap { @connections += 1 } }
   end
 
-  def all_tcp_sockets
-    @sockets.map(&:dup)
+  def servers
+    [OpenStruct.new(hostname: "fake.hostname", port: "8080")]
   end
 end

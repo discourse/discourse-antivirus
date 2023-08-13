@@ -33,9 +33,8 @@ module DiscourseAntivirus
 
     def update_versions
       antivirus_versions =
-        clamav_services_pool.instances.map do |instance|
-          antivirus_version = with_session(instance) { |s| write_in_socket(s, "zVERSION\0") }
-          antivirus_version = clean_msg(antivirus_version).split("/")
+        clamav_services_pool.online_services.map do |service|
+          antivirus_version = service.version.split("/")
 
           {
             antivirus: antivirus_version[0],
@@ -49,35 +48,33 @@ module DiscourseAntivirus
     end
 
     def accepting_connections?
-      available = online_target.present?
+      unavailable = clamav_services_pool.all_offline?
 
-      update_status(!available)
+      PluginStore.set(PLUGIN_NAME, UNAVAILABLE, unavailable)
 
-      available
+      !unavailable
     end
 
     def scan_upload(upload)
-      begin
-        file = get_uploaded_file(upload)
+      file = get_uploaded_file(upload)
 
-        return error_response(DOWNLOAD_FAILED) if file.nil?
+      return error_response(DOWNLOAD_FAILED) if file.nil?
 
-        scan_file(file)
-      rescue OpenURI::HTTPError
-        error_response(DOWNLOAD_FAILED)
-      rescue StandardError => e
-        Rails.logger.error("Could not scan upload #{upload.id}. Error: #{e.message}")
-        error_response(e.message)
-      end
+      scan_file(file)
+    rescue OpenURI::HTTPError
+      error_response(DOWNLOAD_FAILED)
+    rescue StandardError => e
+      Rails.logger.error("Could not scan upload #{upload.id}. Error: #{e.message}")
+      error_response(e.message)
     end
 
     def scan_file(file)
-      scan_response =
-        begin
-          with_session { |socket| stream_file(socket, file) }
-        rescue StandardError => e
-          e.message
-        end
+      online_service = clamav_services_pool.find_online_service
+
+      # We open one connection to check if the service is online and another
+      # to scan the file.
+      scan_response = online_service&.scan_file(file)
+      return error_response(UNAVAILABLE) unless scan_response
 
       parse_response(scan_response)
     end
@@ -90,56 +87,12 @@ module DiscourseAntivirus
       { error: true, found: false, message: error_message }
     end
 
-    def update_status(unavailable)
-      PluginStore.set(PLUGIN_NAME, UNAVAILABLE, unavailable)
-    end
-
-    def online_target
-      clamav_services_pool.instances.find do |instance|
-        ping_result = with_session(instance) { |s| write_in_socket(s, "zPING\0") }
-
-        clean_msg(ping_result) == "PONG"
-      end
-    end
-
-    def clean_msg(raw)
-      raw.gsub("1: ", "").strip
-    end
-
-    def with_session(instance = online_target)
-      socket = instance&.connect!
-
-      raise "ERROR: socket cannot be open" if !socket
-
-      write_in_socket(socket, "zIDSESSION\0")
-
-      yield(socket)
-
-      write_in_socket(socket, "zEND\0")
-
-      response = get_full_response_from(socket)
-      socket.close
-      response
-    end
-
     def parse_response(scan_response)
       {
-        message: scan_response.gsub("1: stream:", "").gsub("\0", ""),
+        message: scan_response.gsub("stream:", "").gsub("\0", ""),
         found: scan_response.include?("FOUND"),
         error: scan_response.include?("ERROR"),
       }
-    end
-
-    def stream_file(socket, file)
-      write_in_socket(socket, "zINSTREAM\0")
-
-      while data = file.read(2048)
-        write_in_socket(socket, [data.length].pack("N"))
-        write_in_socket(socket, data)
-      end
-
-      write_in_socket(socket, [0].pack("N"))
-      write_in_socket(socket, "")
     end
 
     def get_uploaded_file(upload)
@@ -151,32 +104,6 @@ module DiscourseAntivirus
       else
         File.open(store.path_for(upload))
       end
-    end
-
-    # ClamAV wants us to read/write in a non-blocking manner to prevent deadlocks.
-    # Read more about this [here](https://manpages.debian.org/testing/clamav-daemon/clamd.8.en.html#IDSESSION,)
-    #
-    # We need to peek into the socket buffer to make sure we can write/read from it,
-    # or we risk ClamAV abruptly closing the connection.
-    # For that, we use [IO#select](https://www.rubydoc.info/stdlib/core/IO.select)
-    def write_in_socket(socket, msg)
-      IO.select(nil, [socket])
-      socket.sendmsg_nonblock(msg, 0, nil)
-    end
-
-    def read_from_socket(socket)
-      IO.select([socket])
-
-      # Returns an array with the chunk as the first element
-      socket.recvmsg_nonblock(25).to_a.first.to_s
-    end
-
-    def get_full_response_from(socket)
-      buffer = ""
-
-      buffer += read_from_socket(socket) until buffer.ends_with?("\0")
-
-      buffer
     end
   end
 end

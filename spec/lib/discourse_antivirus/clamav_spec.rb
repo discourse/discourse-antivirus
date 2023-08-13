@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "rails_helper"
+require_relative "../../support/fake_pool"
 require_relative "../../support/fake_tcp_socket"
 
 describe DiscourseAntivirus::ClamAV do
@@ -15,7 +16,7 @@ describe DiscourseAntivirus::ClamAV do
   describe "#scan_upload" do
     it "returns false when the file is clear" do
       fake_socket = FakeTCPSocket.negative
-      pool = build_fake_pool(socket: fake_socket)
+      pool = build_fake_pool(fake_socket)
       antivirus = build_antivirus(pool)
 
       scan_result = antivirus.scan_upload(upload)
@@ -26,7 +27,7 @@ describe DiscourseAntivirus::ClamAV do
 
     it "returns true when the file has a virus" do
       fake_socket = FakeTCPSocket.positive
-      pool = build_fake_pool(socket: fake_socket)
+      pool = build_fake_pool(fake_socket)
       antivirus = build_antivirus(pool)
 
       scan_result = antivirus.scan_upload(upload)
@@ -37,7 +38,7 @@ describe DiscourseAntivirus::ClamAV do
 
     it "detects if ClamAV returned an error" do
       fake_socket = FakeTCPSocket.error
-      pool = build_fake_pool(socket: fake_socket)
+      pool = build_fake_pool(fake_socket)
       antivirus = build_antivirus(pool)
 
       scan_result = antivirus.scan_upload(upload)
@@ -55,10 +56,10 @@ describe DiscourseAntivirus::ClamAV do
     let(:last_update) { "Wed Jun 24 10:13:27 2020" }
 
     let(:socket) do
-      FakeTCPSocket.new(["1: #{antivirus_version}/#{database_version}/#{last_update}\0"])
+      FakeTCPSocket.new("1: #{antivirus_version}/#{database_version}/#{last_update}\0")
     end
 
-    let(:antivirus) { build_antivirus(build_fake_pool(socket: socket)) }
+    let(:antivirus) { build_antivirus(build_fake_pool(socket)) }
 
     it "returns the version from the plugin store after fetching the last one" do
       antivirus.update_versions
@@ -100,11 +101,10 @@ describe DiscourseAntivirus::ClamAV do
     expected = ["zIDSESSION\0", "zVERSION\0", "zEND\0"]
 
     expect(fake_socket.received_before_close).to contain_exactly(*expected)
-    expect(fake_socket.received).to be_empty
   end
 
   def assert_file_was_sent_through(fake_socket, file)
-    expected = ["zPING\0", "zIDSESSION\0", "zINSTREAM\0"]
+    expected = ["zIDSESSION\0", "zINSTREAM\0"]
 
     file.rewind
     while data = file.read(2048)
@@ -118,11 +118,10 @@ describe DiscourseAntivirus::ClamAV do
     expected << "zEND\0"
 
     expect(fake_socket.received_before_close).to contain_exactly(*expected)
-    expect(fake_socket.received).to be_empty
   end
 
-  def build_fake_pool(socket:)
-    OpenStruct.new(tcp_socket: socket, all_tcp_sockets: [socket])
+  def build_fake_pool(socket)
+    FakePool.new([FakeTCPSocket.online, socket])
   end
 
   def build_antivirus(pool)
