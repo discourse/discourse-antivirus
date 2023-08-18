@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "rails_helper"
+require_relative "../../support/fake_pool"
 require_relative "../../support/fake_tcp_socket"
 
 describe DiscourseAntivirus::BackgroundScan do
@@ -54,7 +55,7 @@ describe DiscourseAntivirus::BackgroundScan do
         .with(upload, max_file_size_kb: filesize)
         .raises(OpenURI::HTTPError.new("forbidden", nil))
 
-      antivirus = DiscourseAntivirus::ClamAV.new(store, build_fake_pool(socket: socket))
+      antivirus = DiscourseAntivirus::ClamAV.new(store, build_fake_pool(socket))
       scanner = described_class.new(antivirus)
       scanned_upload = ScannedUpload.create_new!(upload)
 
@@ -74,7 +75,7 @@ describe DiscourseAntivirus::BackgroundScan do
       filesize = upload.filesize + 2.megabytes
       store.expects(:download).with(upload, max_file_size_kb: filesize).returns(nil)
 
-      antivirus = DiscourseAntivirus::ClamAV.new(store, build_fake_pool(socket: socket))
+      antivirus = DiscourseAntivirus::ClamAV.new(store, build_fake_pool(socket))
       scanner = described_class.new(antivirus)
       scanned_upload = ScannedUpload.create_new!(upload)
 
@@ -264,14 +265,14 @@ describe DiscourseAntivirus::BackgroundScan do
     end
   end
 
-  def build_fake_pool(socket:)
-    OpenStruct.new(tcp_socket: socket, all_tcp_sockets: [socket])
+  def build_fake_pool(socket)
+    FakePool.new([FakeTCPSocket.online, socket])
   end
 
   def build_scanner(quarantine_files: false)
     IO.stubs(:select)
     socket = quarantine_files ? FakeTCPSocket.positive : FakeTCPSocket.negative
-    antivirus = DiscourseAntivirus::ClamAV.new(Discourse.store, build_fake_pool(socket: socket))
+    antivirus = DiscourseAntivirus::ClamAV.new(Discourse.store, build_fake_pool(socket))
     described_class.new(antivirus)
   end
 end
