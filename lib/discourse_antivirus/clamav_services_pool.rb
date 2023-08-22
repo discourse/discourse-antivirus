@@ -20,7 +20,7 @@ module DiscourseAntivirus
       @factory ||=
         Proc.new do |hostname, port|
           begin
-            TCPSocket.new(@hostname, @port, connect_timeout: 3)
+            TCPSocket.new(hostname, port, connect_timeout: 3)
           rescue StandardError
             nil
           end
