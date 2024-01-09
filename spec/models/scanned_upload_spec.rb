@@ -88,6 +88,7 @@ describe ScannedUpload do
     end
 
     it "sets the next scan to one week from now after the first week" do
+      freeze_time
       upload.created_at = 1.week.ago
       scanned_upload.next_scan_at = nil
 
@@ -97,6 +98,7 @@ describe ScannedUpload do
     end
 
     it "sets the next scan to x weeks in the future where x is the number of weeks since created" do
+      freeze_time
       upload.created_at = 2.weeks.ago
       scanned_upload.next_scan_at = 1.day.ago
 
