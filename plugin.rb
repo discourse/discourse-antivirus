@@ -37,15 +37,16 @@ after_initialize do
 
   replace_flags(settings: PostActionType.flag_settings, score_type_names: %i[malicious_file])
 
-  add_to_serializer(:site, :clamav_unreacheable, false) do
+  add_to_serializer(
+    :site,
+    :clamav_unreacheable,
+    respect_plugin_enabled: false,
+    include_condition: -> { SiteSetting.discourse_antivirus_enabled? && scope.is_staff? },
+  ) do
     !!PluginStore.get(
       DiscourseAntivirus::ClamAV::PLUGIN_NAME,
       DiscourseAntivirus::ClamAV::UNAVAILABLE,
     )
-  end
-
-  add_to_serializer(:site, :include_clamav_unreacheable?, false) do
-    SiteSetting.discourse_antivirus_enabled? && scope.is_staff?
   end
 
   on(:site_setting_changed) do |name, _, new_val|
