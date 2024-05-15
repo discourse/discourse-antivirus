@@ -11,10 +11,8 @@ gem "dns-sd", "0.1.3"
 enabled_site_setting :discourse_antivirus_enabled
 register_asset "stylesheets/reviewable-upload.scss"
 
-PLUGIN_NAME ||= "DiscourseAntivirus"
-
-load File.expand_path("lib/discourse_antivirus/engine.rb", __dir__)
-load File.expand_path("lib/validators/enable_discourse_antivirus_validator.rb", __dir__)
+require_relative "lib/discourse_antivirus/engine"
+require_relative "lib/validators/enable_discourse_antivirus_validator"
 
 add_admin_route "antivirus.title", "antivirus"
 
