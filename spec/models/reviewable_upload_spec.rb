@@ -3,8 +3,8 @@
 require "rails_helper"
 
 describe ReviewableUpload do
-  fab!(:admin) { Fabricate(:admin) }
-  fab!(:upload) { Fabricate(:upload) }
+  fab!(:admin)
+  fab!(:upload)
   let(:reviewable) do
     ReviewableUpload
       .needs_review!(

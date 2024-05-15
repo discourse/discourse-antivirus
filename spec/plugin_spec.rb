@@ -7,7 +7,7 @@ require_relative "support/fake_tcp_socket"
 describe DiscourseAntivirus do
   before { SiteSetting.discourse_antivirus_enabled = true }
 
-  fab!(:user) { Fabricate(:user) }
+  fab!(:user)
 
   describe "regular files" do
     before { SiteSetting.authorized_extensions = "pdf" }
