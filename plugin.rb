@@ -33,8 +33,6 @@ after_initialize do
 
   register_reviewable_type ReviewableUpload
 
-  replace_flags(settings: PostActionType.flag_settings, score_type_names: %i[malicious_file])
-
   add_to_serializer(
     :site,
     :clamav_unreacheable,
