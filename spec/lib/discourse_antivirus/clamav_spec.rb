@@ -4,7 +4,7 @@ require "rails_helper"
 require_relative "../../support/fake_pool"
 require_relative "../../support/fake_tcp_socket"
 
-describe DiscourseAntivirus::ClamAV do
+describe DiscourseAntivirus::ClamAv do
   fab!(:upload) { Fabricate(:image_upload) }
   let(:file) { File.open(Discourse.store.path_for(upload)) }
 

@@ -7,7 +7,7 @@ module Jobs
     def execute(_args)
       return unless SiteSetting.discourse_antivirus_enabled?
 
-      antivirus = DiscourseAntivirus::ClamAV.instance
+      antivirus = DiscourseAntivirus::ClamAv.instance
       return unless antivirus.accepting_connections?
 
       DiscourseAntivirus::BackgroundScan.new(antivirus).scan_batch

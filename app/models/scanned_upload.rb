@@ -92,3 +92,23 @@ class ScannedUpload < ActiveRecord::Base
     result[:found] ? move_to_quarantine!(result[:message]) : save!
   end
 end
+
+# == Schema Information
+#
+# Table name: scanned_uploads
+#
+#  id                          :bigint           not null, primary key
+#  upload_id                   :integer
+#  next_scan_at                :datetime
+#  quarantined                 :boolean          default(FALSE), not null
+#  scans                       :integer          default(0), not null
+#  virus_database_version_used :integer
+#  created_at                  :datetime         not null
+#  updated_at                  :datetime         not null
+#  last_scan_failed            :boolean          default(FALSE), not null
+#  scan_result                 :string
+#
+# Indexes
+#
+#  index_scanned_uploads_on_upload_id  (upload_id) UNIQUE
+#

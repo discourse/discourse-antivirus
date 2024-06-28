@@ -7,7 +7,7 @@ module Jobs
     def execute(_args)
       return unless SiteSetting.discourse_antivirus_enabled?
 
-      DiscourseAntivirus::ClamAV.instance.update_versions
+      DiscourseAntivirus::ClamAv.instance.update_versions
     end
   end
 end

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class FakePool < DiscourseAntivirus::ClamAVServicesPool
+class FakePool < DiscourseAntivirus::ClamAvServicesPool
   def initialize(sockets)
     @sockets = sockets
     @connections = 0
