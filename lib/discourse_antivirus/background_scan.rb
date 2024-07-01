@@ -17,7 +17,7 @@ module DiscourseAntivirus
 
       {
         versions: @antivirus.versions,
-        background_scan_stats: {
+        stats: {
           scans: scanned_upload_stats[0] || 0,
           recently_scanned: scanned_upload_stats[1] || 0,
           quarantined: scanned_upload_stats[2] || 0,

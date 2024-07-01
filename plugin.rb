@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # name: discourse-antivirus
-# about: Scan uploads
+# about: Scan your Discourse uploads using ClamAV
 # version: 0.1
 # authors: romanrizzi
 # url: https://github.com/discourse/discourse-antivirus
@@ -18,7 +18,7 @@ end
 
 require_relative "lib/discourse_antivirus/engine"
 
-add_admin_route "antivirus.title", "antivirus"
+add_admin_route("antivirus.title", "antivirus", { use_new_show_route: true })
 
 after_initialize do
   register_reviewable_type ReviewableUpload
