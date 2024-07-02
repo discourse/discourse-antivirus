@@ -1,16 +1,9 @@
 # frozen_string_literal: true
 
-module DiscourseAntivirus
+module ::DiscourseAntivirus
   class Engine < ::Rails::Engine
-    engine_name "discourse-antivirus"
+    engine_name PLUGIN_NAME
     isolate_namespace DiscourseAntivirus
-
-    config.after_initialize do
-      Discourse::Application.routes.append do
-        mount ::DiscourseAntivirus::Engine,
-              at: "/admin/plugins/antivirus",
-              constraints: AdminConstraint.new
-      end
-    end
+    config.autoload_paths << File.join(config.root, "lib")
   end
 end

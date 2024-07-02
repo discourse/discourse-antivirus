@@ -7,7 +7,7 @@ module Jobs
     def execute(_args)
       return unless SiteSetting.discourse_antivirus_enabled?
 
-      scanner = DiscourseAntivirus::BackgroundScan.new(DiscourseAntivirus::ClamAV.instance)
+      scanner = DiscourseAntivirus::BackgroundScan.new(DiscourseAntivirus::ClamAv.instance)
       scanner.queue_batch
     end
   end

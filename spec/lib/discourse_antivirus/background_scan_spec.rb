@@ -15,8 +15,8 @@ describe DiscourseAntivirus::BackgroundScan do
       updated_at: "Wed Jun 24 10:13:27 2020",
     }
     PluginStore.set(
-      DiscourseAntivirus::ClamAV::PLUGIN_NAME,
-      DiscourseAntivirus::ClamAV::STORE_KEY,
+      DiscourseAntivirus::ClamAv::PLUGIN_NAME,
+      DiscourseAntivirus::ClamAv::STORE_KEY,
       [version_data],
     )
   end
@@ -55,7 +55,7 @@ describe DiscourseAntivirus::BackgroundScan do
         .with(upload, max_file_size_kb: filesize)
         .raises(OpenURI::HTTPError.new("forbidden", nil))
 
-      antivirus = DiscourseAntivirus::ClamAV.new(store, build_fake_pool(socket))
+      antivirus = DiscourseAntivirus::ClamAv.new(store, build_fake_pool(socket))
       scanner = described_class.new(antivirus)
       scanned_upload = ScannedUpload.create_new!(upload)
 
@@ -63,7 +63,7 @@ describe DiscourseAntivirus::BackgroundScan do
       scanned_upload.reload
 
       expect(scanned_upload.scans).to eq(0)
-      expect(scanned_upload.scan_result).to eq(DiscourseAntivirus::ClamAV::DOWNLOAD_FAILED)
+      expect(scanned_upload.scan_result).to eq(DiscourseAntivirus::ClamAv::DOWNLOAD_FAILED)
       expect(scanned_upload.next_scan_at).to be_present
       expect(scanned_upload.last_scan_failed).to eq(true)
     end
@@ -75,7 +75,7 @@ describe DiscourseAntivirus::BackgroundScan do
       filesize = upload.filesize + 2.megabytes
       store.expects(:download).with(upload, max_file_size_kb: filesize).returns(nil)
 
-      antivirus = DiscourseAntivirus::ClamAV.new(store, build_fake_pool(socket))
+      antivirus = DiscourseAntivirus::ClamAv.new(store, build_fake_pool(socket))
       scanner = described_class.new(antivirus)
       scanned_upload = ScannedUpload.create_new!(upload)
 
@@ -83,7 +83,7 @@ describe DiscourseAntivirus::BackgroundScan do
       scanned_upload.reload
 
       expect(scanned_upload.scans).to eq(0)
-      expect(scanned_upload.scan_result).to eq(DiscourseAntivirus::ClamAV::DOWNLOAD_FAILED)
+      expect(scanned_upload.scan_result).to eq(DiscourseAntivirus::ClamAv::DOWNLOAD_FAILED)
       expect(scanned_upload.next_scan_at).to be_present
       expect(scanned_upload.last_scan_failed).to eq(true)
     end
@@ -251,7 +251,7 @@ describe DiscourseAntivirus::BackgroundScan do
     end
 
     def get_stats(stat)
-      build_scanner.stats.dig(:background_scan_stats, stat)
+      build_scanner.stats.dig(:stats, stat)
     end
 
     def create_scanned_upload(updated_at: 6.hours.ago, quarantined: false, scans: 0)
@@ -272,7 +272,7 @@ describe DiscourseAntivirus::BackgroundScan do
   def build_scanner(quarantine_files: false)
     IO.stubs(:select)
     socket = quarantine_files ? FakeTCPSocket.positive : FakeTCPSocket.negative
-    antivirus = DiscourseAntivirus::ClamAV.new(Discourse.store, build_fake_pool(socket))
+    antivirus = DiscourseAntivirus::ClamAv.new(Discourse.store, build_fake_pool(socket))
     described_class.new(antivirus)
   end
 end

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module DiscourseAntivirus
-  class ClamAVServicesPool
+  class ClamAvServicesPool
     def online_services
       instances.select(&:online?)
     end
@@ -31,7 +31,7 @@ module DiscourseAntivirus
       @instances ||=
         servers
           .filter { |server| server&.hostname.present? && server&.port.present? }
-          .map { |server| ClamAVService.new(connection_factory, server.hostname, server.port) }
+          .map { |server| ClamAvService.new(connection_factory, server.hostname, server.port) }
     end
 
     def servers

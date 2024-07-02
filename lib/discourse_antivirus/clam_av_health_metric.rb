@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module DiscourseAntivirus
-  class ClamAVHealthMetric < ::DiscoursePrometheus::InternalMetric::Custom
+  class ClamAvHealthMetric < ::DiscoursePrometheus::InternalMetric::Custom
     attribute :name, :labels, :description, :value, :type
 
     def initialize
@@ -15,7 +15,7 @@ module DiscourseAntivirus
       last_check = @@clamav_stats[:last_check]
 
       if (!last_check || should_recheck?(last_check))
-        antivirus = DiscourseAntivirus::ClamAV.instance
+        antivirus = DiscourseAntivirus::ClamAv.instance
         available = antivirus.accepting_connections? ? 1 : 0
 
         @@clamav_stats[:status] = available

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module DiscourseAntivirus
-  class ClamAVService
+  class ClamAvService
     def initialize(connection_factory, hostname, port)
       @connection_factory = connection_factory
       @hostname = hostname

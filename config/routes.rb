@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-DiscourseAntivirus::Engine.routes.draw do
-  root to: "antivirus#index"
-  get "/stats" => "antivirus#index"
+Discourse::Application.routes.draw do
+  scope "/admin/plugins/discourse-antivirus", constraints: AdminConstraint.new do
+    get "/stats" => "discourse_antivirus/admin/antivirus#index"
+  end
 end

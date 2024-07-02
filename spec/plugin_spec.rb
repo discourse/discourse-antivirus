@@ -108,7 +108,7 @@ describe DiscourseAntivirus do
   def mock_antivirus(socket)
     IO.stubs(:select).returns(true)
     pool = FakePool.new([FakeTCPSocket.online, socket])
-    antivirus = DiscourseAntivirus::ClamAV.new(Discourse.store, pool)
-    DiscourseAntivirus::ClamAV.expects(:instance).returns(antivirus)
+    antivirus = DiscourseAntivirus::ClamAv.new(Discourse.store, pool)
+    DiscourseAntivirus::ClamAv.expects(:instance).returns(antivirus)
   end
 end

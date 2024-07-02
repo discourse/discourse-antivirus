@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module DiscourseAntivirus
-  class ClamAV
+  class ClamAv
     VIRUS_FOUND = Class.new(StandardError)
     PLUGIN_NAME = "discourse-antivirus"
     STORE_KEY = "clamav-versions"
@@ -9,7 +9,7 @@ module DiscourseAntivirus
     UNAVAILABLE = "unavailable"
 
     def self.instance
-      new(Discourse.store, DiscourseAntivirus::ClamAVServicesPool.new)
+      new(Discourse.store, DiscourseAntivirus::ClamAvServicesPool.new)
     end
 
     def self.correctly_configured?

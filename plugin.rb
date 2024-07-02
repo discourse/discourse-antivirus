@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # name: discourse-antivirus
-# about: Scan uploads
+# about: Scan your Discourse uploads using ClamAV
 # version: 0.1
 # authors: romanrizzi
 # url: https://github.com/discourse/discourse-antivirus
@@ -9,28 +9,19 @@
 gem "dns-sd", "0.1.3"
 
 enabled_site_setting :discourse_antivirus_enabled
+
 register_asset "stylesheets/reviewable-upload.scss"
+register_asset "stylesheets/antivirus-stats.scss"
+
+module ::DiscourseAntivirus
+  PLUGIN_NAME = "discourse-antivirus"
+end
 
 require_relative "lib/discourse_antivirus/engine"
-require_relative "lib/validators/enable_discourse_antivirus_validator"
 
-add_admin_route "antivirus.title", "antivirus"
+add_admin_route("antivirus.title", "discourse-antivirus", { use_new_show_route: true })
 
 after_initialize do
-  require_relative "app/controllers/discourse_antivirus/antivirus_controller.rb"
-  require_relative "lib/discourse_antivirus/clamav_services_pool.rb"
-  require_relative "lib/discourse_antivirus/clamav_service.rb"
-  require_relative "lib/discourse_antivirus/clamav.rb"
-  require_relative "lib/discourse_antivirus/background_scan.rb"
-  require_relative "models/scanned_upload.rb"
-  require_relative "models/reviewable_upload.rb"
-  require_relative "serializers/reviewable_upload_serializer.rb"
-  require_relative "jobs/scheduled/scan_batch.rb"
-  require_relative "jobs/scheduled/create_scanned_uploads.rb"
-  require_relative "jobs/scheduled/fetch_antivirus_version.rb"
-  require_relative "jobs/scheduled/remove_orphaned_scanned_uploads.rb"
-  require_relative "jobs/scheduled/flag_quarantined_uploads.rb"
-
   register_reviewable_type ReviewableUpload
 
   add_to_serializer(
@@ -40,8 +31,8 @@ after_initialize do
     include_condition: -> { SiteSetting.discourse_antivirus_enabled? && scope.is_staff? },
   ) do
     !!PluginStore.get(
-      DiscourseAntivirus::ClamAV::PLUGIN_NAME,
-      DiscourseAntivirus::ClamAV::UNAVAILABLE,
+      DiscourseAntivirus::ClamAv::PLUGIN_NAME,
+      DiscourseAntivirus::ClamAv::UNAVAILABLE,
     )
   end
 
@@ -53,7 +44,7 @@ after_initialize do
     should_scan_file = !upload.for_export && (!is_image || SiteSetting.antivirus_live_scan_images)
 
     if validate && should_scan_file && upload.valid?
-      antivirus = DiscourseAntivirus::ClamAV.instance
+      antivirus = DiscourseAntivirus::ClamAv.instance
 
       response = antivirus.scan_file(file)
       is_positive = response[:found]
@@ -63,9 +54,9 @@ after_initialize do
   end
 
   if defined?(::DiscoursePrometheus)
-    require_relative "lib/discourse_antivirus/clamav_health_metric.rb"
+    require_relative "lib/discourse_antivirus/clam_av_health_metric.rb"
 
-    DiscoursePluginRegistry.register_global_collector(DiscourseAntivirus::ClamAVHealthMetric, self)
+    DiscoursePluginRegistry.register_global_collector(DiscourseAntivirus::ClamAvHealthMetric, self)
   end
 
   add_reviewable_score_link(:malicious_file, "plugin:discourse-antivirus")

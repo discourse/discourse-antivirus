@@ -19,6 +19,8 @@ en:
       clamav_unavailable: We cannot establish a connection with the antivirus software. File scanning will be temporarily disabled.
 
       stats:
+        title: Stats
+        data: Scan results
         total_scans: Scanned Files
         recently_scanned: Recently Scanned
         quarantined: Quarantined
