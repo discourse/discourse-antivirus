@@ -18,7 +18,7 @@ end
 
 require_relative "lib/discourse_antivirus/engine"
 
-add_admin_route("antivirus.title", "antivirus", { use_new_show_route: true })
+add_admin_route("antivirus.title", "discourse-antivirus", { use_new_show_route: true })
 
 after_initialize do
   register_reviewable_type ReviewableUpload

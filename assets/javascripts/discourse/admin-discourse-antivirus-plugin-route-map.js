@@ -3,6 +3,9 @@ export default {
   path: "/plugins",
 
   map() {
-    this.route("discourse-antivirus-stats", { path: "stats" });
+    this.route(
+      "discourse-antivirus-stats",
+      { path: "stats" }
+    );
   },
 };
