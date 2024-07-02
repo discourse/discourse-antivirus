@@ -20,6 +20,7 @@ en:
 
       stats:
         title: Stats
+        data: Scan results
         total_scans: Scanned Files
         recently_scanned: Recently Scanned
         quarantined: Quarantined

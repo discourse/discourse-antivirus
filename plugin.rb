@@ -11,6 +11,7 @@ gem "dns-sd", "0.1.3"
 enabled_site_setting :discourse_antivirus_enabled
 
 register_asset "stylesheets/reviewable-upload.scss"
+register_asset "stylesheets/antivirus-stats.scss"
 
 module ::DiscourseAntivirus
   PLUGIN_NAME = "discourse-antivirus"

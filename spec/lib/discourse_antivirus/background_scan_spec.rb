@@ -251,7 +251,7 @@ describe DiscourseAntivirus::BackgroundScan do
     end
 
     def get_stats(stat)
-      build_scanner.stats.dig(:background_scan_stats, stat)
+      build_scanner.stats.dig(:stats, stat)
     end
 
     def create_scanned_upload(updated_at: 6.hours.ago, quarantined: false, scans: 0)
