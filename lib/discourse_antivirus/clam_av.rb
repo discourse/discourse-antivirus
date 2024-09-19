@@ -61,7 +61,7 @@ module DiscourseAntivirus
       return error_response(DOWNLOAD_FAILED) if file.nil?
 
       scan_file(file)
-    rescue OpenURI::HTTPError
+    rescue OpenURI::HTTPError, FileStore::DownloadError
       error_response(DOWNLOAD_FAILED)
     rescue StandardError => e
       Rails.logger.error("Could not scan upload #{upload.id}. Error: #{e.message}")
@@ -100,7 +100,7 @@ module DiscourseAntivirus
         # Upload#filesize could be approximate.
         # add two extra Mbs to make sure that we'll be able to download the upload.
         max_filesize = upload.filesize + 2.megabytes
-        store.download(upload, max_file_size_kb: max_filesize)
+        store.download!(upload, max_file_size_kb: max_filesize)
       else
         File.open(store.path_for(upload))
       end

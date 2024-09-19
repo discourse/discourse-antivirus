@@ -48,6 +48,23 @@ describe DiscourseAntivirus::ClamAv do
       expect(scan_result[:error]).to eq(true)
       assert_file_was_sent_through(fake_socket, file)
     end
+
+    it "handles download errors" do
+      store = Discourse.store
+
+      store.stubs(:external?).returns(true)
+      store.stubs(:download!).raises(FileStore::DownloadError)
+
+      fake_socket = FakeTCPSocket.negative
+      pool = build_fake_pool(fake_socket)
+      antivirus = build_antivirus(pool, store)
+
+      scan_result = antivirus.scan_upload(upload)
+
+      expect(scan_result[:message]).to eq("Download failed")
+      expect(scan_result[:found]).to eq(false)
+      expect(scan_result[:error]).to eq(true)
+    end
   end
 
   describe "#version" do
@@ -124,7 +141,7 @@ describe DiscourseAntivirus::ClamAv do
     FakePool.new([FakeTCPSocket.online, socket])
   end
 
-  def build_antivirus(pool)
-    described_class.new(Discourse.store, pool)
+  def build_antivirus(pool, store = Discourse.store)
+    described_class.new(store, pool)
   end
 end
