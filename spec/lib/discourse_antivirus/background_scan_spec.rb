@@ -51,7 +51,7 @@ describe DiscourseAntivirus::BackgroundScan do
       store.stubs(:external?).returns(true)
       filesize = upload.filesize + 2.megabytes
       store
-        .expects(:download)
+        .expects(:download!)
         .with(upload, max_file_size_kb: filesize)
         .raises(OpenURI::HTTPError.new("forbidden", nil))
 
@@ -73,7 +73,7 @@ describe DiscourseAntivirus::BackgroundScan do
       store = Discourse.store
       store.stubs(:external?).returns(true)
       filesize = upload.filesize + 2.megabytes
-      store.expects(:download).with(upload, max_file_size_kb: filesize).returns(nil)
+      store.expects(:download!).with(upload, max_file_size_kb: filesize).returns(nil)
 
       antivirus = DiscourseAntivirus::ClamAv.new(store, build_fake_pool(socket))
       scanner = described_class.new(antivirus)
