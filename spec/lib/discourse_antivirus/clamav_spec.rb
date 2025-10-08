@@ -5,7 +5,7 @@ require_relative "../../support/fake_pool"
 require_relative "../../support/fake_tcp_socket"
 
 describe DiscourseAntivirus::ClamAv do
-  fab!(:upload) { Fabricate(:image_upload) }
+  fab!(:upload, :image_upload)
   let(:file) { File.open(Discourse.store.path_for(upload)) }
 
   before do

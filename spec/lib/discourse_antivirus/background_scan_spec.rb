@@ -5,7 +5,7 @@ require_relative "../../support/fake_pool"
 require_relative "../../support/fake_tcp_socket"
 
 describe DiscourseAntivirus::BackgroundScan do
-  fab!(:upload) { Fabricate(:image_upload) }
+  fab!(:upload, :image_upload)
   let(:db_version) { 25_853 }
 
   before do
@@ -181,7 +181,7 @@ describe DiscourseAntivirus::BackgroundScan do
       end
 
       it "scans uploads" do
-        scanned_upload = create_scanned_upload(next_scan_at: 1.days.ago)
+        scanned_upload = create_scanned_upload(next_scan_at: 1.day.ago)
 
         build_scanner(quarantine_files: false).scan_batch
 
