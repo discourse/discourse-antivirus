@@ -23,6 +23,11 @@ add_admin_route("antivirus.title", "discourse-antivirus", { use_new_show_route: 
 
 after_initialize do
   register_reviewable_type ReviewableUpload
+  require_relative "serializers/reviewable_upload_serializer"
+  if Rails.env.local? && enabled?
+    require_relative "lib/discourse_dev/reviewable_upload"
+    DiscoursePluginRegistry.discourse_dev_populate_reviewable_types.add DiscourseDev::ReviewableUpload
+  end
 
   add_to_serializer(
     :site,
