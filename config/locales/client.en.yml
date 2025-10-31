@@ -31,3 +31,4 @@ en:
       remove_file: Delete file
       remove_file_and_delete_posts: Delete file + posts
       remove_file_and_delete_user: Delete file + user
+      reviewable_delete_prompt: Are you sure you want to proceed?

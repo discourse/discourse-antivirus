@@ -14,7 +14,7 @@ class ReviewableUpload < Reviewable
       )
 
     build_action(actions, :remove_file, bundle: reject, icon: "thumbs-up")
-    build_action(actions, :remove_file_and_delete_posts, bundle: reject, icon: "trash-alt")
+    build_action(actions, :remove_file_and_delete_posts, bundle: reject, icon: "trash-can")
 
     if target_created_by && guardian.can_delete_user?(target_created_by)
       build_action(
