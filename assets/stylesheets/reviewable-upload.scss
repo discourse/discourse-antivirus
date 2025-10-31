@@ -7,6 +7,11 @@
 
     .post-contents-wrapper {
       margin: 1em;
+      display: flex;
+
+      .created-by {
+        margin-right: 1em;
+      }
     }
 
     .reviewable-upload-details {
