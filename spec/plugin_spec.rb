@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "rails_helper"
 require_relative "support/fake_pool"
 require_relative "support/fake_tcp_socket"
 
