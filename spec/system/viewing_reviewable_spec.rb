@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe "Viewing reviewable upload", type: :system do
+describe "Viewing reviewable upload" do
   fab!(:admin)
   fab!(:group)
   fab!(:upload)

@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "rails_helper"
-
 describe ScannedUpload do
   let(:post) { Fabricate(:post) }
   let(:upload) { Fabricate(:upload, posts: [post]) }
