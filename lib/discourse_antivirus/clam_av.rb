@@ -100,7 +100,9 @@ module DiscourseAntivirus
         # Upload#filesize could be approximate.
         # add two extra Mbs to make sure that we'll be able to download the upload.
         max_filesize = upload.filesize + 2.megabytes
-        store.download!(upload, max_file_size_kb: max_filesize)
+        result = store.download!(upload, max_file_size_kb: max_filesize)
+        # TODO(zogstrip): switch to new API once https://github.com/discourse/discourse/pull/37760 is merged
+        result.is_a?(String) ? File.open(result) : result
       else
         File.open(store.path_for(upload))
       end
