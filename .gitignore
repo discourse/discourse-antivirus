@@ -2,4 +2,5 @@
 auto_generated
 .DS_Store
 node_modules/
-gems/*.eslintcache
+gems/*
+.eslintcache

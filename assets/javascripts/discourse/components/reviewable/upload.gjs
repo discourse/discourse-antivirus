@@ -1,8 +1,9 @@
+/* eslint-disable ember/no-classic-components, ember/require-tagless-components */
 import Component from "@ember/component";
 import CookText from "discourse/components/cook-text";
 import ReviewableCreatedBy from "discourse/components/reviewable/created-by";
-import ReviewableField from "discourse/components/reviewable-field";
 import ReviewableTopicLink from "discourse/components/reviewable/topic-link";
+import ReviewableField from "discourse/components/reviewable-field";
 import { i18n } from "discourse-i18n";
 
 export default class extends Component {
