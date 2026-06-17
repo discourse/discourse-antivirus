@@ -6,7 +6,7 @@ RSpec.describe ReviewablesController do
   fab!(:uploader, :user)
   fab!(:participant, :user)
 
-  before { SiteSetting.discourse_antivirus_enabled = true }
+  before { enable_current_plugin }
 
   describe "#show" do
     it "hides PM raw from non-participant moderators", :aggregate_failures do
