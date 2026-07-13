@@ -29,17 +29,8 @@ after_initialize do
     DiscoursePluginRegistry.discourse_dev_populate_reviewable_types.add DiscourseDev::ReviewableUpload
   end
 
-  add_to_serializer(
-    :site,
-    :clamav_unreacheable,
-    respect_plugin_enabled: false,
-    include_condition: -> { SiteSetting.discourse_antivirus_enabled? && scope.is_staff? },
-  ) do
-    !!PluginStore.get(
-      DiscourseAntivirus::ClamAv::PLUGIN_NAME,
-      DiscourseAntivirus::ClamAv::UNAVAILABLE,
-    )
-  end
+  require_relative "app/services/problem_check/clamav_unavailable"
+  register_problem_check ProblemCheck::ClamavUnavailable
 
   on(:site_setting_changed) do |name, _, new_val|
     Jobs.enqueue(:fetch_antivirus_version) if name == :discourse_antivirus_enabled && new_val
