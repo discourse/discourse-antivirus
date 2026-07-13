@@ -1,4 +1,7 @@
 en:
+  dashboard:
+    problem:
+      clamav_unavailable: "We cannot establish a connection with the antivirus software. File scanning will be temporarily disabled."
   site_settings:
     discourse_antivirus_enabled: "Enable discourse-antivirus plugin"
     antivirus_live_scan_images: Enable live scanning of images
