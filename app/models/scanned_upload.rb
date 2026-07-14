@@ -46,7 +46,8 @@ class ScannedUpload < ActiveRecord::Base
       "#{Upload.base62_sha1(upload.sha1)}#{upload.extension.present? ? ".#{upload.extension}" : ""}"
     original_post = upload.posts.last
     original_post_raw_example = original_post&.raw
-    reviewable_topic = original_post&.topic
+    original_post_is_whisper = original_post&.whisper?
+    reviewable_topic = original_post_is_whisper ? nil : original_post&.topic
 
     self.class.transaction do
       uploaded_to =
@@ -61,7 +62,7 @@ class ScannedUpload < ActiveRecord::Base
         ReviewableUpload.needs_review!(
           created_by: system_user,
           target: upload,
-          reviewable_by_moderator: !reviewable_topic&.private_message?,
+          reviewable_by_moderator: !original_post_is_whisper && !reviewable_topic&.private_message?,
           topic: reviewable_topic,
           payload: {
             scan_message: scan_message,
