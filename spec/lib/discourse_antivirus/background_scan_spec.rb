@@ -269,7 +269,6 @@ describe DiscourseAntivirus::BackgroundScan do
   end
 
   def build_scanner(quarantine_files: false)
-    IO.stubs(:select)
     socket = quarantine_files ? FakeTCPSocket.positive : FakeTCPSocket.negative
     antivirus = DiscourseAntivirus::ClamAv.new(Discourse.store, build_fake_pool(socket))
     described_class.new(antivirus)

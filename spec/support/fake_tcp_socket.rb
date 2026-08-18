@@ -1,4 +1,7 @@
 # frozen_string_literal: true
+
+require "socket"
+
 class FakeTCPSocket
   def self.online
     new("1: PONG\0")
@@ -22,10 +25,22 @@ class FakeTCPSocket
     @received_before_close = []
     @received = []
     @next_to_read = 0
+
+    # ClamAvService peeks into the socket with IO.select before every read and
+    # write. Backing the fake with a real socket pair lets those calls resolve
+    # through #to_io instead of forcing specs to stub IO.select globally, which
+    # would also intercept unrelated core code (e.g. Landlock reading a
+    # subprocess' output while ImageMagick runs).
+    @io, @peer = UNIXSocket.pair
+    @peer.write("\0") # nothing ever reads this, so @io stays readable
   end
 
   attr_reader :received, :received_before_close
   attr_accessor :canned_response
+
+  def to_io
+    @io
+  end
 
   def sendmsg_nonblock(text, _, _)
     raise if @closed
@@ -48,5 +63,7 @@ class FakeTCPSocket
   def close
     @closed = true
     @received_before_close = @received
+    @io.close
+    @peer.close
   end
 end

@@ -7,10 +7,7 @@ describe DiscourseAntivirus::ClamAv do
   fab!(:upload, :image_upload)
   let(:file) { File.open(Discourse.store.path_for(upload)) }
 
-  before do
-    file.rewind
-    IO.stubs(:select)
-  end
+  before { file.rewind }
 
   describe "#scan_upload" do
     it "returns false when the file is clear" do
